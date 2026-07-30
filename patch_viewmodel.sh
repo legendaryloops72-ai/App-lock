@@ -1,0 +1,2 @@
+#!/bin/bash
+sed -i 's/val authError: StateFlow<String?> = _authError.asStateFlow()/val authError: StateFlow<String?> = _authError.asStateFlow()\n    private val _isSelfLocked = MutableStateFlow(true)\n    val isSelfLocked: StateFlow<Boolean> = _isSelfLocked.asStateFlow()\n    fun unlockSelf() { _isSelfLocked.value = false }\n    fun requireSelfAuth() { _isSelfLocked.value = true }/g' app/src/main/java/com/example/ui/viewmodel/AppLockViewModel.kt

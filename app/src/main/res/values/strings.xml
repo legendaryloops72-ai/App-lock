@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">App Lock</string>
+    <string name="language_title">Language / اللغة / Idioma</string>
+    <string name="language_desc">Choose app language (English, Arabic, Spanish)</string>
+    <string name="lang_ar">العربية (Arabic)</string>
+    <string name="lang_en">English (English)</string>
+    <string name="lang_es">Español (Spanish)</string>
+</resources>

@@ -1,0 +1,6 @@
+{
+  "name": "App Lock",
+  "description": "A secure and feature-rich App Lock application supporting PIN, pattern lock, intruder selfie logs, and app protection management.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

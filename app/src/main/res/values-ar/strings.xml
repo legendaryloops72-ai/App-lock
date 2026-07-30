@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">قفل التطبيقات</string>
+    <string name="language_title">اللغة (Language)</string>
+    <string name="language_desc">اختر لغة التطبيق (العربية، الإنجليزية، الإسبانية)</string>
+    <string name="lang_ar">العربية (Arabic)</string>
+    <string name="lang_en">English (الإنجليزية)</string>
+    <string name="lang_es">Español (الإسبانية)</string>
+</resources>
