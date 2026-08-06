@@ -179,8 +179,46 @@ fun SettingsScreen(
 
                         Divider(color = Color(0xFF2D3242))
 
-                        // Change PIN
+                        // Uninstall Protection toggle
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.Shield, contentDescription = null, tint = Color(0xFFEF4444))
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(text = "منع إلغاء التثبيت (الدرع الذكي)", fontWeight = FontWeight.Bold, color = Color.White)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Surface(
+                                        color = Color(0xFF10B981),
+                                        shape = RoundedCornerShape(4.dp)
+                                    ) {
+                                        Text(text = "آمن", color = Color.White, fontSize = 10.sp, modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp), fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                                Text(
+                                    text = "حظر الدخول لصفحة إعدادات التطبيق لقطع محاولات الحذف أو الإيقاف الإجباري.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color.Gray
+                                )
+                            }
+                            Switch(
+                                checked = currentSettings.uninstallProtectionEnabled,
+                                onCheckedChange = { isChecked ->
+                                    viewModel.updateSettings(currentSettings.copy(uninstallProtectionEnabled = isChecked))
+                                    if (isChecked) {
+                                        onNavigateToPermissions()
+                                    }
+                                }
+                            )
+                        }
+
                         Divider(color = Color(0xFF2D3242))
+
+                        // Change PIN
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()

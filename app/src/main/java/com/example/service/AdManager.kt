@@ -19,12 +19,17 @@ import kotlinx.coroutines.launch
  * AdManager يوازي ad_service.dart المطلوب
  * 
  * NOTE: Replace the test Ad Unit IDs with your real AdMob Ad Unit IDs before releasing to production.
+ * Real AdMob App ID must be placed in /app/src/main/AndroidManifest.xml inside the meta-data element:
+ * <meta-data
+ *     android:name="com.google.android.gms.ads.APPLICATION_ID"
+ *     android:value="ca-app-pub-3940256099942544~3347511713"/> <-- Replace with your real App ID (e.g., ca-app-pub-xxxxxxxxxxxxxxxx~xxxxxxxxxx)
  */
 object AdManager {
-    // Test Ad Unit IDs
-    const val BANNER_AD_UNIT_ID = "ca-app-pub-3940256099942544/6300978111"
-    private const val INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-3940256099942544/1033173712"
-    private const val APP_OPEN_AD_UNIT_ID = "ca-app-pub-3940256099942544/9257395921" // Included as requested
+    // Real / Test Ad Unit IDs (Defaults to Google test IDs for safety and local testing)
+    // Replace with your real ones from the AdMob dashboard once ready for production.
+    const val BANNER_AD_UNIT_ID = "ca-app-pub-3940256099942544/6300978111" // <-- Real Banner Ad ID goes here
+    private const val INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-3940256099942544/1033173712" // <-- Real Interstitial Ad ID goes here
+    private const val APP_OPEN_AD_UNIT_ID = "ca-app-pub-3940256099942544/9257395921" // <-- Real App Open Ad ID goes here
 
     private var interstitialAd: InterstitialAd? = null
     private var appOpenAd: AppOpenAd? = null
@@ -53,7 +58,7 @@ object AdManager {
 
                 override fun onAdFailedToLoad(error: LoadAdError) {
                     isAppOpenAdLoading = false
-                    Log.d("AdManager", "App Open Ad Failed: \${error.message}")
+                    Log.e("AdManager", "App Open Ad Failed to load: ${error.message}")
                 }
             }
         )
@@ -64,13 +69,32 @@ object AdManager {
         if (isEmergencyMode) return
         
         if (appOpenAd != null) {
-            appOpenAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
-                override fun onAdDismissedFullScreenContent() {
-                    appOpenAd = null
-                    loadAppOpenAd(activity)
+            try {
+                appOpenAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
+                    override fun onAdDismissedFullScreenContent() {
+                        Log.d("AdManager", "App Open Ad dismissed.")
+                        appOpenAd = null
+                        loadAppOpenAd(activity)
+                    }
+
+                    override fun onAdFailedToShowFullScreenContent(adError: AdError) {
+                        Log.e("AdManager", "App Open Ad failed to show: ${adError.message}")
+                        appOpenAd = null
+                        loadAppOpenAd(activity)
+                    }
                 }
+
+                // Safety Check: Avoid WindowManager$BadTokenException if Activity is finishing or destroyed
+                if (!activity.isFinishing && !activity.isDestroyed) {
+                    appOpenAd?.show(activity)
+                } else {
+                    Log.w("AdManager", "Skipped App Open Ad show: Activity is finishing/destroyed.")
+                    appOpenAd = null
+                }
+            } catch (e: Exception) {
+                Log.e("AdManager", "Exception while trying to show App Open Ad", e)
+                appOpenAd = null
             }
-            appOpenAd?.show(activity)
         } else {
             loadAppOpenAd(activity)
         }
@@ -89,10 +113,9 @@ object AdManager {
             adRequest,
             object : InterstitialAdLoadCallback() {
                 override fun onAdFailedToLoad(adError: LoadAdError) {
-                    Log.d("AdManager", "Failed to load Interstitial Ad: \${adError.message}")
+                    Log.e("AdManager", "Failed to load Interstitial Ad: ${adError.message}")
                     interstitialAd = null
                     isAdLoading = false
-                    // إعادة المحاولة التلقائية بعد فشل التحميل يمكن إضافتها هنا إن لزم الأمر
                 }
 
                 override fun onAdLoaded(ad: InterstitialAd) {
@@ -109,30 +132,54 @@ object AdManager {
         if (isEmergencyMode) return
         
         if (interstitialAd != null) {
-            // إضافة回调 لمعرفة متى يتم إغلاق الإعلان لتحميل إعلان جديد تلقائياً
-            interstitialAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
-                override fun onAdDismissedFullScreenContent() {
-                    Log.d("AdManager", "Ad was dismissed.")
-                    interstitialAd = null
-                    // إعادة تحميل الإعلان التلقائي (Ad Reload)
-                    loadInterstitialAd(activity)
+            try {
+                // إضافة回调 لمعرفة متى يتم إغلاق الإعلان لتحميل إعلان جديد تلقائياً
+                interstitialAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
+                    override fun onAdDismissedFullScreenContent() {
+                        Log.d("AdManager", "Interstitial Ad was dismissed.")
+                        interstitialAd = null
+                        // إعادة تحميل الإعلان التلقائي (Ad Reload)
+                        loadInterstitialAd(activity)
+                    }
+
+                    override fun onAdFailedToShowFullScreenContent(adError: AdError) {
+                        Log.e("AdManager", "Interstitial Ad failed to show: ${adError.message}")
+                        interstitialAd = null
+                        // Reload ad automatically to recover
+                        loadInterstitialAd(activity)
+                    }
                 }
 
-                override fun onAdFailedToShowFullScreenContent(adError: AdError) {
-                    Log.d("AdManager", "Ad failed to show.")
-                    interstitialAd = null
+                if (isAppJustOpened) {
+                    // تأخير عرض الإعلان ٣ ثوانٍ كما هو مطلوب لكي لا يؤثر على تجربة المستخدم
+                    CoroutineScope(Dispatchers.Main).launch {
+                        delay(3000)
+                        // Safety Check: Verify that the activity is still fully active after the delay
+                        if (!activity.isFinishing && !activity.isDestroyed) {
+                            try {
+                                interstitialAd?.show(activity)
+                            } catch (e: Exception) {
+                                Log.e("AdManager", "Exception during delayed Interstitial show", e)
+                                interstitialAd = null
+                            }
+                        } else {
+                            Log.w("AdManager", "Skipped delayed Interstitial Ad show: Activity is finishing/destroyed.")
+                            interstitialAd = null
+                        }
+                        isAppJustOpened = false
+                    }
+                } else {
+                    // Safety Check: Verify activity before direct show
+                    if (!activity.isFinishing && !activity.isDestroyed) {
+                        interstitialAd?.show(activity)
+                    } else {
+                        Log.w("AdManager", "Skipped direct Interstitial Ad show: Activity is finishing/destroyed.")
+                        interstitialAd = null
+                    }
                 }
-            }
-
-            if (isAppJustOpened) {
-                // تأخير عرض الإعلان ٣ ثوانٍ كما هو مطلوب لكي لا يؤثر على تجربة المستخدم
-                CoroutineScope(Dispatchers.Main).launch {
-                    delay(3000)
-                    interstitialAd?.show(activity)
-                    isAppJustOpened = false
-                }
-            } else {
-                interstitialAd?.show(activity)
+            } catch (e: Exception) {
+                Log.e("AdManager", "Exception while setting up fullScreenContentCallback or showing Interstitial Ad", e)
+                interstitialAd = null
             }
         } else {
             Log.d("AdManager", "The interstitial ad wasn't ready yet.")
@@ -146,3 +193,4 @@ object AdManager {
         isEmergencyMode = enabled
     }
 }
+

@@ -20,8 +20,12 @@ class AppLockUsageService : Service() {
         if (job == null || job?.isActive != true) {
             job = serviceScope.launch {
                 while (isActive) {
+                    if (AppLockAccessibilityService.isServiceRunning) {
+                        delay(3000)
+                        continue
+                    }
                     checkForegroundApp()
-                    delay(1000)
+                    delay(150)
                 }
             }
         }

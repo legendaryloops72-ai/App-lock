@@ -54,6 +54,7 @@ fun LockScreen(
 ) {
     val settings by viewModel.settings.collectAsState()
     val authError by viewModel.authError.collectAsState()
+    val unlockSuccess by viewModel.unlockSuccess.collectAsState()
 
     var enteredPin by remember { mutableStateOf("") }
     var showSuccessCelebration by remember { mutableStateOf(false) }
@@ -62,6 +63,12 @@ fun LockScreen(
     val context = LocalContext.current
     val fragmentActivity = context as? androidx.fragment.app.FragmentActivity
     var biometricFailCount by remember { mutableStateOf(0) }
+
+    LaunchedEffect(unlockSuccess) {
+        if (unlockSuccess) {
+            showSuccessCelebration = true
+        }
+    }
 
     val launchBiometric = {
         if (fragmentActivity != null && settings?.isBiometricEnabled == true && BiometricAuthHelper.canAuthenticate(context)) {
@@ -72,7 +79,7 @@ fun LockScreen(
                 negativeButtonText = "الرمز السري (PIN)",
                 onSuccess = {
                     biometricFailCount = 0
-                    showSuccessCelebration = true
+                    viewModel.onBiometricSuccess()
                 },
                 onError = { err ->
                     viewModel.setAuthError(err)
@@ -103,7 +110,7 @@ fun LockScreen(
     if (showSuccessCelebration) {
         androidx.compose.runtime.LaunchedEffect(Unit) {
             kotlinx.coroutines.delay(1600)
-            viewModel.dismissLockScreen()
+            viewModel.unlockSuccessful()
         }
         Box(
             modifier = Modifier
@@ -257,11 +264,12 @@ fun LockScreen(
                     }
 
                     // Numeric Keypad
+                    val showBiometricButton = settings?.isBiometricEnabled == true && BiometricAuthHelper.canAuthenticate(context)
                     val rows = listOf(
                         listOf("1", "2", "3"),
                         listOf("4", "5", "6"),
                         listOf("7", "8", "9"),
-                        listOf("Bio", "0", "Del")
+                        listOf(if (showBiometricButton) "Bio" else "", "0", "Del")
                     )
 
                     rows.forEach { row ->
@@ -280,11 +288,9 @@ fun LockScreen(
                                                 }
                                             }
                                             "Bio" -> {
-                                                // Simulate biometric success
-                                                settings?.let { s ->
-                                                    viewModel.verifyPin(s.pin, s, appName)
-                                                }
+                                                launchBiometric()
                                             }
+                                            "" -> {}
                                             else -> {
                                                 if (enteredPin.length < 4) {
                                                     enteredPin += key
@@ -311,12 +317,8 @@ fun LockScreen(
                 ) {
                     PatternLockView(
                         onPatternComplete = { pattern ->
-                            if (pattern == settings?.patternSequence) {
-                                showSuccessCelebration = true
-                            } else {
-                                settings?.let { s ->
-                                    viewModel.verifyPattern(pattern, s, appName)
-                                }
+                            settings?.let { s ->
+                                viewModel.verifyPattern(pattern, s, appName)
                             }
                         }
                     )
@@ -345,6 +347,10 @@ fun KeypadButton(
     key: String,
     onClick: () -> Unit
 ) {
+    if (key.isEmpty()) {
+        Spacer(modifier = Modifier.size(68.dp))
+        return
+    }
     val isSpecial = key == "Del" || key == "Bio"
     val bgColor = if (isSpecial) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface
     val contentColor = if (isSpecial) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface

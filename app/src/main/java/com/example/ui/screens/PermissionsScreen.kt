@@ -1,11 +1,16 @@
 package com.example.ui.screens
 
+import android.Manifest
 import android.app.AppOpsManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Process
 import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,6 +27,24 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.ui.viewmodel.AppLockViewModel
+
+private fun isAccessibilityServiceEnabled(context: Context): Boolean {
+    val expectedComponentName = android.content.ComponentName(context, com.example.service.AppLockAccessibilityService::class.java)
+    val enabledServicesSetting = Settings.Secure.getString(
+        context.contentResolver,
+        Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+    ) ?: return false
+    val colonSplitter = android.text.TextUtils.SimpleStringSplitter(':')
+    colonSplitter.setString(enabledServicesSetting)
+    while (colonSplitter.hasNext()) {
+        val componentNameString = colonSplitter.next()
+        val enabledService = android.content.ComponentName.unflattenFromString(componentNameString)
+        if (enabledService != null && enabledService == expectedComponentName) {
+            return true
+        }
+    }
+    return false
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,6 +70,45 @@ fun PermissionsScreen(
                 false
             }
         )
+    }
+    val accessibilityGranted = remember { mutableStateOf(isAccessibilityServiceEnabled(context)) }
+    val cameraGranted = remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+        )
+    }
+
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        cameraGranted.value = isGranted
+    }
+
+    // Refresh permissions on resume when returning from settings
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                overlayGranted.value = Settings.canDrawOverlays(context)
+                usageGranted.value = try {
+                    val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
+                    val mode = appOps.checkOpNoThrow(
+                        AppOpsManager.OPSTR_GET_USAGE_STATS,
+                        Process.myUid(),
+                        context.packageName
+                    )
+                    mode == AppOpsManager.MODE_ALLOWED
+                } catch (e: Exception) {
+                    false
+                }
+                accessibilityGranted.value = isAccessibilityServiceEnabled(context)
+                cameraGranted.value = ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
     }
 
     Scaffold(
@@ -109,16 +171,16 @@ fun PermissionsScreen(
             item {
                 PermissionCardItem(
                     title = "خدمة إمكانية الوصول (Accessibility Service)",
-                    description = "تتيح للتطبيق رصد فتح التطبيقات المقفلة في الوقت الفعلي وعرض شاشة القفل فوراً قبل فتح التطبيق.",
-                    isGranted = false, // Managed via system accessibility settings
-                    grantButtonText = "منح إذن الوصول",
+                    description = "ضرورية للغاية لحماية خصوصيتك ومنع الحذف غير المصرح به؛ تتيح للتطبيق رصد محاولات الدخول لصفحة إعدادات (AppLock) لمنع المتطفلين من إلغاء تثبيت التطبيق أو إيقافه إجبارياً، بالإضافة لرصد تشغيل التطبيقات المقفلة بالوقت الفعلي وعرض شاشة القفل فوراً.",
+                    isGranted = accessibilityGranted.value,
+                    grantButtonText = if (accessibilityGranted.value) "تم منح الإذن بنجاح" else "منح إذن الوصول",
                     onGrantClick = {
                         try {
                             val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
-                            context.startActivity(intent)
+                            viewModel.ignoreNextSelfLock(); context.startActivity(intent)
                         } catch (e: Exception) {
                             val intent = Intent(Settings.ACTION_SETTINGS)
-                            context.startActivity(intent)
+                            viewModel.ignoreNextSelfLock(); context.startActivity(intent)
                         }
                     }
                 )
@@ -133,10 +195,10 @@ fun PermissionsScreen(
                     onGrantClick = {
                         try {
                             val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
-                            context.startActivity(intent)
+                            viewModel.ignoreNextSelfLock(); context.startActivity(intent)
                         } catch (e: Exception) {
                             val intent = Intent(Settings.ACTION_SETTINGS)
-                            context.startActivity(intent)
+                            viewModel.ignoreNextSelfLock(); context.startActivity(intent)
                         }
                     }
                 )
@@ -154,10 +216,24 @@ fun PermissionsScreen(
                                 Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                                 Uri.parse("package:${context.packageName}")
                             )
-                            context.startActivity(intent)
+                            viewModel.ignoreNextSelfLock(); context.startActivity(intent)
                         } catch (e: Exception) {
                             val intent = Intent(Settings.ACTION_SETTINGS)
-                            context.startActivity(intent)
+                            viewModel.ignoreNextSelfLock(); context.startActivity(intent)
+                        }
+                    }
+                )
+            }
+
+            item {
+                PermissionCardItem(
+                    title = "صلاحية الكاميرا (Camera Permission)",
+                    description = "ضرورية لالتقاط صورة سيلفي للمتطفل (Intruder Selfie) تلقائياً عند كتابة رمز فتح خاطئ لثلاث مرات متتالية.",
+                    isGranted = cameraGranted.value,
+                    grantButtonText = if (cameraGranted.value) "تم منح الإذن بنجاح" else "منح إذن الكاميرا",
+                    onGrantClick = {
+                        if (!cameraGranted.value) {
+                            cameraLauncher.launch(Manifest.permission.CAMERA)
                         }
                     }
                 )

@@ -24,7 +24,8 @@ data class SecuritySettingsEntity(
     val isOnboardingCompleted: Boolean = false,
     val isDarkMode: Boolean = false,
     val wallpaperType: String = "DEFAULT", // "DEFAULT", "GRADIENT", "CUSTOM"
-    val wallpaperValue: String = ""
+    val wallpaperValue: String = "",
+    val uninstallProtectionEnabled: Boolean = false
 )
 
 @Entity(tableName = "intruder_logs")

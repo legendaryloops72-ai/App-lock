@@ -11,7 +11,7 @@ import kotlinx.coroutines.launch
 
 @Database(
     entities = [ProtectedAppEntity::class, SecuritySettingsEntity::class, IntruderLogEntity::class],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class AppLockDatabase : RoomDatabase() {

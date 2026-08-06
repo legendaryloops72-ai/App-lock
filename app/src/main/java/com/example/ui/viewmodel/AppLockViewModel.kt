@@ -41,14 +41,31 @@ class AppLockViewModel(application: Application) : AndroidViewModel(application)
     val selectedCategory: StateFlow<String> = _selectedCategory.asStateFlow()
 
     // Interception / Lock Screen Simulation State
+    private val _interceptedPackageName = MutableStateFlow<String?>(null)
+    val interceptedPackageName: StateFlow<String?> = _interceptedPackageName.asStateFlow()
+
     private val _interceptedAppName = MutableStateFlow<String?>(null)
     val interceptedAppName: StateFlow<String?> = _interceptedAppName.asStateFlow()
+
+    private val _unlockSuccess = MutableStateFlow(false)
+    val unlockSuccess: StateFlow<Boolean> = _unlockSuccess.asStateFlow()
 
     // Authentication result state for lock screen
     private val _authError = MutableStateFlow<String?>(null)
     val authError: StateFlow<String?> = _authError.asStateFlow()
     private val _isSelfLocked = MutableStateFlow(true)
     val isSelfLocked: StateFlow<Boolean> = _isSelfLocked.asStateFlow()
+    private var ignoreNextLock = false
+    fun ignoreNextSelfLock() { ignoreNextLock = true }
+    fun checkAndRequireSelfAuth(timeoutMs: Long, backgroundTime: Long) {
+        if (ignoreNextLock) {
+            ignoreNextLock = false
+            return
+        }
+        if (backgroundTime > 0 && System.currentTimeMillis() - backgroundTime > timeoutMs) {
+            _isSelfLocked.value = true
+        }
+    }
     fun unlockSelf() { _isSelfLocked.value = false }
     fun requireSelfAuth() { _isSelfLocked.value = true }
 
@@ -66,18 +83,45 @@ class AppLockViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    fun triggerIntercept(packageName: String, appName: String) {
+        _interceptedPackageName.value = packageName
+        _interceptedAppName.value = appName
+        _unlockSuccess.value = false
+        _authError.value = null
+    }
+
     fun triggerAppLaunch(app: ProtectedAppEntity) {
         if (app.isLocked) {
+            _interceptedPackageName.value = app.packageName
             _interceptedAppName.value = app.appName
+            _unlockSuccess.value = false
             _authError.value = null
         } else {
             // Unlocked app opens immediately
+            _interceptedPackageName.value = null
             _interceptedAppName.value = null
+            _unlockSuccess.value = false
         }
     }
 
     fun dismissLockScreen() {
+        _interceptedPackageName.value = null
         _interceptedAppName.value = null
+        _unlockSuccess.value = false
+        _authError.value = null
+    }
+
+    fun onBiometricSuccess() {
+        _unlockSuccess.value = true
+    }
+
+    fun unlockSuccessful() {
+        _interceptedPackageName.value?.let { pkg ->
+            com.example.service.AppLockAccessibilityService.unlockedPackage = pkg
+        }
+        _interceptedPackageName.value = null
+        _interceptedAppName.value = null
+        _unlockSuccess.value = false
         _authError.value = null
     }
 
@@ -93,7 +137,7 @@ class AppLockViewModel(application: Application) : AndroidViewModel(application)
                 // Success!
                 failedAttemptsCount = 0
                 _authError.value = null
-                _interceptedAppName.value = null
+                _unlockSuccess.value = true
             } else {
                 failedAttemptsCount++
                 _authError.value = "Incorrect PIN. Attempt $failedAttemptsCount of 3."
@@ -129,7 +173,7 @@ class AppLockViewModel(application: Application) : AndroidViewModel(application)
             if (enteredPattern == currentSettings.patternSequence) {
                 failedAttemptsCount = 0
                 _authError.value = null
-                _interceptedAppName.value = null
+                _unlockSuccess.value = true
             } else {
                 failedAttemptsCount++
                 _authError.value = "Incorrect Pattern. Attempt $failedAttemptsCount of 3."

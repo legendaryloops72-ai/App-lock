@@ -28,7 +28,17 @@ fun AppSelfLockScreen(
     settings: SecuritySettingsEntity,
     onUnlock: () -> Unit
 ) {
-    val context = LocalContext.current as FragmentActivity
+    val currentContext = LocalContext.current
+    val context = remember(currentContext) {
+        var ctx = currentContext
+        while (ctx is android.content.ContextWrapper) {
+            if (ctx is FragmentActivity) {
+                break
+            }
+            ctx = ctx.baseContext
+        }
+        ctx as FragmentActivity
+    }
     var showPinFallback by remember { mutableStateOf(false) }
     var biometricAttempts by remember { mutableIntStateOf(0) }
     var errorMessage by remember { mutableStateOf<String?>(null) }

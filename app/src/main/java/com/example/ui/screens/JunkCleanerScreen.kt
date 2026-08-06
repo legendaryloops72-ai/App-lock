@@ -238,17 +238,17 @@ fun JunkCleanerScreen(
                         val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION).apply {
                             data = Uri.parse("package:${context.packageName}")
                         }
-                        context.startActivity(intent)
+                        viewModel.ignoreNextSelfLock(); context.startActivity(intent)
                     } catch (e: Exception) {
                         try {
                             val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
                                 data = Uri.parse("package:${context.packageName}")
                             }
-                            context.startActivity(intent)
+                            viewModel.ignoreNextSelfLock(); context.startActivity(intent)
                         } catch (e2: Exception) {
                             try {
                                 val intent = Intent(Settings.ACTION_SETTINGS)
-                                context.startActivity(intent)
+                                viewModel.ignoreNextSelfLock(); context.startActivity(intent)
                             } catch (e3: Exception) {}
                         }
                     }

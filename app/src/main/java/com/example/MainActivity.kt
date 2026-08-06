@@ -56,6 +56,8 @@ class MainActivity : androidx.fragment.app.FragmentActivity() {
       startService(android.content.Intent(this, com.example.service.AppLockUsageService::class.java))
     } catch (e: Exception) {}
 
+    handleIntent(intent)
+
     setContent {
       val settings by viewModel.settings.collectAsState()
       val darkTheme = settings?.isDarkMode ?: androidx.compose.foundation.isSystemInDarkTheme()
@@ -260,9 +262,21 @@ class MainActivity : androidx.fragment.app.FragmentActivity() {
             "5_MIN" -> 300_000L
             else -> 0L // Default to immediately if unknown
         }
-        if (backgroundTime > 0 && System.currentTimeMillis() - backgroundTime > timeoutMs) {
-            viewModel.requireSelfAuth()
-        }
+        viewModel.checkAndRequireSelfAuth(timeoutMs, backgroundTime)
+    }
+  }
+
+  override fun onNewIntent(intent: android.content.Intent) {
+    super.onNewIntent(intent)
+    setIntent(intent)
+    handleIntent(intent)
+  }
+
+  private fun handleIntent(intent: android.content.Intent?) {
+    val pkg = intent?.getStringExtra("INTERCEPT_PACKAGE")
+    val name = intent?.getStringExtra("INTERCEPT_NAME")
+    if (pkg != null && name != null) {
+      viewModel.triggerIntercept(pkg, name)
     }
   }
 }
