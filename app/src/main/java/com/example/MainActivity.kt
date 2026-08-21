@@ -39,18 +39,24 @@ import com.example.ui.screens.VaultScreen
 import com.example.ui.screens.AppSelfLockScreen
 import com.example.ui.theme.MyApplicationTheme
 import com.example.ui.viewmodel.AppLockViewModel
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 
 class MainActivity : androidx.fragment.app.FragmentActivity() {
   private val viewModel: AppLockViewModel by viewModels()
   private var backgroundTime: Long = 0
 
   override fun onCreate(savedInstanceState: Bundle?) {
+    installSplashScreen()
     super.onCreate(savedInstanceState)
     enableEdgeToEdge()
     
-    com.google.android.gms.ads.MobileAds.initialize(this) {}
-    com.example.service.AdManager.loadInterstitialAd(this)
-    com.example.service.AdManager.showInterstitialAd(this)
+    try {
+      com.example.service.AdManager.initialize(this) { status ->
+        android.util.Log.d("MainActivity", "MobileAds initialized with status: $status")
+        com.example.service.AdManager.loadInterstitialAd(this)
+        com.example.service.AdManager.showInterstitialAd(this)
+      }
+    } catch (e: Exception) {}
     
     try {
       startService(android.content.Intent(this, com.example.service.AppLockUsageService::class.java))

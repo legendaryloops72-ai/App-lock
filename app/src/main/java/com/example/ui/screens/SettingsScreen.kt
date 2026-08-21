@@ -405,6 +405,78 @@ fun SettingsScreen(
                 }
             }
 
+            // Privacy Policy Card
+            item {
+                Card(
+                    onClick = {
+                        try {
+                            val intent = android.content.Intent(
+                                android.content.Intent.ACTION_VIEW,
+                                android.net.Uri.parse("https://kidspolicy-bcd2mive.manus.space/")
+                            )
+                            context.startActivity(intent)
+                        } catch (e: Exception) {
+                            try {
+                                android.widget.Toast.makeText(context, "لا يمكن فتح رابط سياسة الخصوصية", android.widget.Toast.LENGTH_SHORT).show()
+                            } catch (ex: Exception) {}
+                        }
+                    },
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFF232733)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.Info, contentDescription = null, tint = Color(0xFF10B981))
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(text = "سياسة الخصوصية", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
+                            Text(text = "عرض سياسة الخصوصية وحماية البيانات الخاصة بالتطبيق", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                        }
+                        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color.Gray)
+                    }
+                }
+            }
+
+            // Ad Inspector Card
+            item {
+                Card(
+                    onClick = {
+                        com.example.service.AdManager.openAdInspector(context) { error ->
+                            if (error != null) {
+                                android.widget.Toast.makeText(
+                                    context,
+                                    "فشل فتح Ad Inspector: $error",
+                                    android.widget.Toast.LENGTH_LONG
+                                ).show()
+                            }
+                        }
+                    },
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFF232733)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.BugReport, contentDescription = null, tint = Color(0xFF3B82F6))
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(text = "فحص الإعلانات (Ad Inspector)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
+                            Text(text = "اختبار وتتبع مصادر وحالة إعلانات Next-Gen SDK", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                        }
+                        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color.Gray)
+                    }
+                }
+            }
+
             // Version info footer
             item {
                 Box(

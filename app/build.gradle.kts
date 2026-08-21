@@ -17,8 +17,8 @@ android {
     applicationId = "com.aistudio.applock.abcd"
     minSdk = 24
     targetSdk = 36
-    versionCode = 4
-    versionName = "4.0"
+    versionCode = 5
+    versionName = "5.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
@@ -73,6 +73,7 @@ googleServices { missingGoogleServicesStrategy = MissingGoogleServicesStrategy.W
 dependencies {
   implementation(platform(libs.androidx.compose.bom))
   implementation(platform(libs.firebase.bom))
+  implementation("com.google.firebase:firebase-analytics")
   // implementation(libs.accompanist.permissions)
   implementation(libs.androidx.activity.compose)
   // implementation(libs.androidx.camera.camera2)
@@ -86,6 +87,7 @@ dependencies {
   implementation(libs.androidx.compose.ui.graphics)
   implementation(libs.androidx.compose.ui.tooling.preview)
   implementation(libs.androidx.core.ktx)
+  implementation(libs.androidx.core.splashscreen)
   // implementation(libs.androidx.datastore.preferences)
   implementation(libs.androidx.lifecycle.runtime.compose)
   implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -114,7 +116,7 @@ dependencies {
   implementation(libs.logging.interceptor)
   implementation(libs.moshi.kotlin)
   implementation(libs.okhttp)
-  implementation("com.google.android.gms:play-services-ads:23.6.0")
+  implementation("com.google.android.libraries.ads.mobile.sdk:ads-mobile-sdk:0.13.0-alpha01")
   // implementation(libs.play.services.location)
   implementation(libs.retrofit)
   testImplementation(libs.androidx.compose.ui.test.junit4)

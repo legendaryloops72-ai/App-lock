@@ -24,15 +24,15 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MyApplication">
         
-        <!-- AdMob App ID (Test ID) -->
+        <!-- AdMob App ID -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713"/>
+            android:value="ca-app-pub-4760027279848820~7533922348"/>
 
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.MyApplication" />
+            android:theme="@style/Theme.AppLock.Starting" />
 
         <activity-alias
             android:name=".MainActivityAliasDefault"
