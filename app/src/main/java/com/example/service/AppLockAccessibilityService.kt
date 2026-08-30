@@ -45,17 +45,16 @@ class AppLockAccessibilityService : AccessibilityService() {
         if (event == null) return
         val packageName = event.packageName?.toString() ?: return
 
-        // Clear unlocked package bypass immediately if leaving Settings or Package Installers
-        if (packageName != "com.android.settings" && 
-            !packageName.contains("packageinstaller") && 
-            unlockedPackage != null) {
-            unlockedPackage = null
-        }
-
         // Do not intercept or lock our own app
         if (packageName == applicationContext.packageName) return
 
+        // If this is the currently unlocked package, allow access
         if (packageName == unlockedPackage) return
+
+        // If user navigates away to a different app/launcher, reset the unlocked package bypass
+        if (unlockedPackage != null && packageName != unlockedPackage) {
+            unlockedPackage = null
+        }
 
         serviceScope.launch {
             try {

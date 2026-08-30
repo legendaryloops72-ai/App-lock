@@ -122,8 +122,9 @@ fun LockScreen(
 
     if (showSuccessCelebration) {
         androidx.compose.runtime.LaunchedEffect(Unit) {
-            kotlinx.coroutines.delay(1600)
+            kotlinx.coroutines.delay(800)
             viewModel.unlockSuccessful()
+            (context as? android.app.Activity)?.moveTaskToBack(true)
         }
         Box(
             modifier = Modifier
@@ -345,7 +346,10 @@ fun LockScreen(
 
             // Cancel / Dismiss button
             Button(
-                onClick = { viewModel.dismissLockScreen() },
+                onClick = { 
+                    viewModel.dismissLockScreen()
+                    (context as? android.app.Activity)?.moveTaskToBack(true)
+                },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.surfaceVariant,
                     contentColor = MaterialTheme.colorScheme.onSurfaceVariant

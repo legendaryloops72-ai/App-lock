@@ -16,12 +16,20 @@ class AppLockRepository(private val dao: AppLockDao) {
         dao.insertApp(app)
     }
 
+    suspend fun insertNewApps(apps: List<ProtectedAppEntity>) {
+        dao.insertNewApps(apps)
+    }
+
+    suspend fun getExistingApps(): List<ProtectedAppEntity> {
+        return dao.getAppList()
+    }
+
     suspend fun saveSettings(settings: SecuritySettingsEntity) {
         dao.insertOrUpdateSettings(settings)
     }
 
-    suspend fun logIntruder(log: IntruderLogEntity) {
-        dao.insertIntruderLog(log)
+    suspend fun logIntruder(log: IntruderLogEntity): Long {
+        return dao.insertIntruderLog(log)
     }
 
     suspend fun deleteLog(id: Long) {

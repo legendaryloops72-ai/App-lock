@@ -100,6 +100,17 @@ fun IntruderLogsScreen(
     var showClearAllDialog by remember { mutableStateOf(false) }
     var viewMode by remember { mutableStateOf(0) } // 0 = Gallery Grid, 1 = Detail List
 
+    androidx.compose.runtime.LaunchedEffect(intruderLogs) {
+        if (intruderLogs.isNotEmpty()) {
+            val maxId = intruderLogs.maxOfOrNull { it.id } ?: 0L
+            context.getSharedPreferences("intruder_prefs", android.content.Context.MODE_PRIVATE)
+                .edit()
+                .putLong("last_seen_intruder_id", maxId)
+                .putLong("last_notified_intruder_id", maxId)
+                .apply()
+        }
+    }
+
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         Scaffold(
             topBar = {

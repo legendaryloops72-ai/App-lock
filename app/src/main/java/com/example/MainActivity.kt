@@ -78,6 +78,16 @@ class MainActivity : androidx.fragment.app.FragmentActivity() {
         val isOnboardingCompleted = sharedPrefs.getBoolean("onboarding_done", false)
         val startDest = if (isOnboardingCompleted) "home" else "onboarding"
 
+        val pendingNavigation by viewModel.pendingNavigation.collectAsState()
+        LaunchedEffect(pendingNavigation) {
+            if (pendingNavigation != null) {
+                try {
+                    navController.navigate(pendingNavigation!!)
+                } catch (e: Exception) {}
+                viewModel.clearPendingNavigation()
+            }
+        }
+
         LaunchedEffect(settings) {
             if (settings?.isOnboardingCompleted == true) {
                 sharedPrefs.edit().putBoolean("onboarding_done", true).apply()
@@ -277,6 +287,7 @@ class MainActivity : androidx.fragment.app.FragmentActivity() {
         }
         viewModel.checkAndRequireSelfAuth(timeoutMs, backgroundTime)
     }
+    viewModel.checkAndNotifyUnseenIntruders(this)
   }
 
   override fun onNewIntent(intent: android.content.Intent) {
@@ -286,6 +297,10 @@ class MainActivity : androidx.fragment.app.FragmentActivity() {
   }
 
   private fun handleIntent(intent: android.content.Intent?) {
+    val navTo = intent?.getStringExtra("navigate_to")
+    if (navTo != null) {
+      viewModel.setPendingNavigation(navTo)
+    }
     val pkg = intent?.getStringExtra("INTERCEPT_PACKAGE")
     val name = intent?.getStringExtra("INTERCEPT_NAME")
     if (pkg != null && name != null) {

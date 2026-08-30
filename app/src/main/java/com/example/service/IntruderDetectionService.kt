@@ -64,9 +64,9 @@ class IntruderDetectionService : Service() {
                                 details = details,
                                 photoPath = photoPath
                             )
-                            db.appLockDao().insertIntruderLog(log)
-                            Log.d(TAG, "Intruder log recorded with photo: $photoPath")
-                            showIntruderNotification(context, appName, photoPath != null)
+                            val insertedId = db.appLockDao().insertIntruderLog(log)
+                            Log.d(TAG, "Intruder log recorded with photo: $photoPath, id: $insertedId")
+                            showIntruderNotification(context, appName, photoPath != null, insertedId)
                             onComplete()
                         }
                     }
@@ -78,59 +78,15 @@ class IntruderDetectionService : Service() {
                         details = details,
                         photoPath = null
                     )
-                    db.appLockDao().insertIntruderLog(log)
-                    Log.d(TAG, "Intruder log recorded without photo: $details")
+                    val insertedId = db.appLockDao().insertIntruderLog(log)
+                    Log.d(TAG, "Intruder log recorded without photo: $details, id: $insertedId")
+                    showIntruderNotification(context, appName, false, insertedId)
                     onComplete()
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Error performing intruder capture", e)
                 onComplete()
             }
-        }
-    }
-
-    private fun showIntruderNotification(context: Context, appName: String, hasPhoto: Boolean) {
-        try {
-            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
-                ?: return
-
-            val channelId = "intruder_alerts_channel"
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val channel = NotificationChannel(
-                    channelId,
-                    "تنبيهات المتطفلين (Intruder Alerts)",
-                    NotificationManager.IMPORTANCE_HIGH
-                ).apply {
-                    description = "تنبيه عند محاولات الفتح الفاشلة والتقاط سيلفي للمتطفل"
-                }
-                notificationManager.createNotificationChannel(channel)
-            }
-
-            val intent = Intent(context, MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                putExtra("navigate_to", "intruders")
-            }
-            val pendingIntent = PendingIntent.getActivity(
-                context,
-                0,
-                intent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-
-            val photoText = if (hasPhoto) "تم التقاط صورة للمتطفل بالكاميرا الأمامية 📸" else "تم تسجيل محاولة الدخول"
-            val notification = NotificationCompat.Builder(context, channelId)
-                .setSmallIcon(R.drawable.ic_launcher_foreground)
-                .setContentTitle("⚠️ تنبيه أمان: محاولة فتح فاشلة!")
-                .setContentText("محاولة غير مصرح بها لفتح ($appName). $photoText")
-                .setStyle(NotificationCompat.BigTextStyle().bigText("تم رصد محاولات فتح غير مصرح بها لتطبيق ($appName).\n$photoText\nاضغط هنا لعرض سجل المتطفلين ومعاينة الصور الملتقطة."))
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setContentIntent(pendingIntent)
-                .setAutoCancel(true)
-                .build()
-
-            notificationManager.notify(NOTIFICATION_ID, notification)
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to send intruder notification", e)
         }
     }
 
@@ -142,6 +98,63 @@ class IntruderDetectionService : Service() {
         const val EXTRA_APP_NAME = "extra_app_name"
         const val EXTRA_DETAILS = "extra_details"
         const val EXTRA_CAPTURE_PHOTO = "extra_capture_photo"
+
+        fun showIntruderNotification(context: Context, appName: String, hasPhoto: Boolean, logId: Long = 0L) {
+            try {
+                val prefs = context.getSharedPreferences("intruder_prefs", Context.MODE_PRIVATE)
+                val lastNotifiedId = prefs.getLong("last_notified_intruder_id", 0L)
+                if (logId > 0L && logId <= lastNotifiedId) {
+                    return // Already notified for this incident
+                }
+
+                val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+                    ?: return
+
+                val channelId = "intruder_alerts_channel"
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    val channel = NotificationChannel(
+                        channelId,
+                        "تنبيهات المتطفلين (Intruder Alerts)",
+                        NotificationManager.IMPORTANCE_HIGH
+                    ).apply {
+                        description = "تنبيه عند محاولات الفتح الفاشلة والتقاط سيلفي للمتطفل"
+                        enableLights(true)
+                        enableVibration(true)
+                    }
+                    notificationManager.createNotificationChannel(channel)
+                }
+
+                val intent = Intent(context, MainActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    putExtra("navigate_to", "intruders")
+                }
+                val pendingIntent = PendingIntent.getActivity(
+                    context,
+                    0,
+                    intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+
+                val photoText = if (hasPhoto) "تم التقاط صورة للمتطفل بالكاميرا الأمامية 📸" else "تم تسجيل محاولة الدخول"
+                val notification = NotificationCompat.Builder(context, channelId)
+                    .setSmallIcon(R.drawable.ic_launcher_foreground)
+                    .setContentTitle("⚠️ تنبيه أمان: محاولة فتح فاشلة!")
+                    .setContentText("محاولة غير مصرح بها لفتح ($appName). $photoText")
+                    .setStyle(NotificationCompat.BigTextStyle().bigText("تم رصد محاولات فتح غير مصرح بها لتطبيق ($appName).\n$photoText\nاضغط هنا لعرض سجل المتطفلين ومعاينة الصور الملتقطة."))
+                    .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .setContentIntent(pendingIntent)
+                    .setAutoCancel(true)
+                    .build()
+
+                notificationManager.notify(NOTIFICATION_ID, notification)
+
+                if (logId > 0L) {
+                    prefs.edit().putLong("last_notified_intruder_id", logId).apply()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to send intruder notification", e)
+            }
+        }
 
         /**
          * Trigger background capture of an intruder attempt.

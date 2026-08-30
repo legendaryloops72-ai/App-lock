@@ -12,6 +12,12 @@ interface AppLockDao {
     @Query("SELECT * FROM protected_apps ORDER BY appName ASC")
     fun getAllApps(): Flow<List<ProtectedAppEntity>>
 
+    @Query("SELECT * FROM protected_apps")
+    suspend fun getAppList(): List<ProtectedAppEntity>
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertNewApps(apps: List<ProtectedAppEntity>)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertApp(app: ProtectedAppEntity)
 
@@ -34,7 +40,7 @@ interface AppLockDao {
     fun getIntruderLogsCount(): Flow<Int>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertIntruderLog(log: IntruderLogEntity)
+    suspend fun insertIntruderLog(log: IntruderLogEntity): Long
 
     @Query("DELETE FROM intruder_logs WHERE id = :id")
     suspend fun deleteIntruderLog(id: Long)
