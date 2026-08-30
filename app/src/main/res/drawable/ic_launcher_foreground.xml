@@ -1,8 +1,145 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item
-        android:width="72dp"
-        android:height="72dp"
-        android:drawable="@drawable/splash_icon"
-        android:gravity="center" />
-</layer-list>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Soft shadow behind shield -->
+    <path
+        android:fillColor="#33000000"
+        android:pathData="M54,20 C68,20 78,25 78,25 C78,56 63,73 54,78 C45,73 30,56 30,25 C30,25 40,20 54,20 Z" />
+
+    <!-- Shield Outer Silver/Chrome Bezel -->
+    <path
+        android:pathData="M54,18 C69,18 80,23.5 80,23.5 C80,56 64,74.5 54,80 C44,74.5 28,56 28,23.5 C28,23.5 39,18 54,18 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="28"
+                android:startY="18"
+                android:endX="80"
+                android:endY="80"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#FFFFFF" />
+                <item android:offset="0.3" android:color="#E2E8F0" />
+                <item android:offset="0.7" android:color="#94A3B8" />
+                <item android:offset="1.0" android:color="#64748B" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Shield Inner Border Highlight -->
+    <path
+        android:pathData="M54,21 C66.5,21 76,25.5 76,25.5 C76,53.5 62.5,69.5 54,74.5 C45.5,69.5 32,53.5 32,25.5 C32,25.5 41.5,21 54,21 Z"
+        android:fillColor="#0F172A" />
+
+    <!-- Shield Interior Left Half (Darker Blue) -->
+    <path
+        android:pathData="M54,22 C43,22 34,26.5 34,26.5 C34,52.5 46.5,67.5 54,72.5 L54,22 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="34"
+                android:startY="22"
+                android:endX="54"
+                android:endY="72.5"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#1D4ED8" />
+                <item android:offset="1.0" android:color="#0F2E7D" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Shield Interior Right Half (Brighter Blue) -->
+    <path
+        android:pathData="M54,22 C65,22 74,26.5 74,26.5 C74,52.5 61.5,67.5 54,72.5 L54,22 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="54"
+                android:startY="22"
+                android:endX="74"
+                android:endY="72.5"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#3B82F6" />
+                <item android:offset="1.0" android:color="#1D4ED8" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Padlock Chrome Shackle Outer -->
+    <path
+        android:pathData="M43,38 C43,30 46,26 53,26 C60,26 63,30 63,38 L63,45 L57,45 L57,38 C57,33 56,31 53,31 C50,31 49,33 49,38 L49,45 L43,45 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="43"
+                android:startY="26"
+                android:endX="63"
+                android:endY="45"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#FFFFFF" />
+                <item android:offset="0.4" android:color="#E2E8F0" />
+                <item android:offset="1.0" android:color="#94A3B8" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Padlock Body 3D Rounded Box -->
+    <path
+        android:pathData="M41,43 L65,43 C67.2,43 69,44.8 69,47 L69,63 C69,65.2 67.2,67 65,67 L41,67 C38.8,67 37,65.2 37,63 L37,47 C37,44.8 38.8,43 41,43 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="37"
+                android:startY="43"
+                android:endX="69"
+                android:endY="67"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#60A5FA" />
+                <item android:offset="0.3" android:color="#3B82F6" />
+                <item android:offset="0.7" android:color="#1D4ED8" />
+                <item android:offset="1.0" android:color="#1E40AF" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Padlock Keyhole Top Circle -->
+    <path
+        android:fillColor="#0B132B"
+        android:pathData="M53,50 A3,3 0 1,0 53,56 A3,3 0 1,0 53,50 Z" />
+
+    <!-- Padlock Keyhole Bottom Slot -->
+    <path
+        android:fillColor="#0B132B"
+        android:pathData="M51.8,54 L54.2,54 L55,61 L51,61 Z" />
+
+    <!-- Checkmark Badge Outer Ring (Glow) -->
+    <path
+        android:fillColor="#052E16"
+        android:pathData="M73,61 A10,10 0 1,0 73,81 A10,10 0 1,0 73,61 Z" />
+
+    <!-- Checkmark Badge Green Border -->
+    <path
+        android:pathData="M73,62 A9,9 0 1,0 73,80 A9,9 0 1,0 73,62 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="64"
+                android:startY="62"
+                android:endX="82"
+                android:endY="80"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#4ADE80" />
+                <item android:offset="1.0" android:color="#16A34A" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Checkmark Badge Dark Center -->
+    <path
+        android:fillColor="#064E3B"
+        android:pathData="M73,64 A7,7 0 1,0 73,78 A7,7 0 1,0 73,64 Z" />
+
+    <!-- Checkmark Vector -->
+    <path
+        android:fillColor="#22C55E"
+        android:pathData="M71.2,74.5 L67.5,70.8 L69,69.3 L71.2,71.5 L76.5,66.2 L78,67.7 Z" />
+
+</vector>
