@@ -1,6 +1,7 @@
 package com.example.ui.screens
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -58,7 +59,12 @@ fun LockScreen(
 
     var enteredPin by remember { mutableStateOf("") }
     var showSuccessCelebration by remember { mutableStateOf(false) }
+    var isVisible by remember { mutableStateOf(false) }
     val lockType = settings?.lockType ?: "PIN"
+
+    LaunchedEffect(Unit) {
+        isVisible = true
+    }
 
     val context = LocalContext.current
     val fragmentActivity = context as? androidx.fragment.app.FragmentActivity
@@ -86,6 +92,13 @@ fun LockScreen(
                 },
                 onFailed = {
                     biometricFailCount++
+                    val details = "محاولة بصمة غير متطابقة - محاولة $biometricFailCount"
+                    com.example.service.IntruderDetectionService.recordFailedAttempt(
+                        context = context,
+                        appName = appName,
+                        details = details,
+                        capturePhoto = true
+                    )
                     if (biometricFailCount >= 3) {
                         viewModel.setAuthError("تجاوزت عدد المحاولات، استخدم الرمز السري")
                     } else {
@@ -186,13 +199,18 @@ fun LockScreen(
             )
         }
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween
+        AnimatedVisibility(
+            visible = isVisible,
+            enter = fadeIn(animationSpec = tween(400)) + slideInVertically(animationSpec = tween(400)) { it / 4 },
+            modifier = Modifier.fillMaxSize()
         ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
             // Header Info
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -339,6 +357,7 @@ fun LockScreen(
                 Text("Cancel / Go Back", fontWeight = FontWeight.SemiBold)
             }
         }
+      }
     }
 }
 

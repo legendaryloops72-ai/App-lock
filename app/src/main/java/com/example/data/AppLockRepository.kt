@@ -24,6 +24,10 @@ class AppLockRepository(private val dao: AppLockDao) {
         dao.insertIntruderLog(log)
     }
 
+    suspend fun deleteLog(id: Long) {
+        dao.deleteIntruderLog(id)
+    }
+
     suspend fun clearLogs() {
         dao.clearIntruderLogs()
     }

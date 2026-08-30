@@ -1,6 +1,7 @@
 package com.example.ui.screens
 
 import android.graphics.drawable.Drawable
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -87,6 +88,9 @@ fun HomeScreen(
     val totalCount = remember(apps) { apps.size }
 
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+        BackHandler(enabled = currentNavIndex != 0) {
+            currentNavIndex = 0
+        }
         Scaffold(
             bottomBar = {
                 Column(modifier = Modifier.fillMaxWidth().background(Color(0xFF0D111A))) {

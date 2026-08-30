@@ -5,6 +5,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -54,7 +56,6 @@ class MainActivity : androidx.fragment.app.FragmentActivity() {
       com.example.service.AdManager.initialize(this) { status ->
         android.util.Log.d("MainActivity", "MobileAds initialized with status: $status")
         com.example.service.AdManager.loadInterstitialAd(this)
-        com.example.service.AdManager.showInterstitialAd(this)
       }
     } catch (e: Exception) {}
     
@@ -229,12 +230,18 @@ class MainActivity : androidx.fragment.app.FragmentActivity() {
               }
             }
 
-            // If an app is intercepted (simulated launch), show Lock Screen overlay
-            if (interceptedApp != null) {
-              LockScreen(
-                appName = interceptedApp!!,
-                viewModel = viewModel
-              )
+            // If an app is intercepted (simulated launch), show Lock Screen overlay with smooth animation
+            AnimatedVisibility(
+                visible = interceptedApp != null,
+                enter = fadeIn(animationSpec = tween(350)) + slideInVertically(initialOffsetY = { it / 3 }, animationSpec = tween(350)),
+                exit = fadeOut(animationSpec = tween(250)) + slideOutVertically(targetOffsetY = { it / 3 }, animationSpec = tween(250))
+            ) {
+                if (interceptedApp != null) {
+                    LockScreen(
+                        appName = interceptedApp!!,
+                        viewModel = viewModel
+                    )
+                }
             }
             
             // Self Auth overlay for AppLock itself

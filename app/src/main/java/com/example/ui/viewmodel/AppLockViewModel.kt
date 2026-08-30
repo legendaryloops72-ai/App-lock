@@ -140,29 +140,23 @@ class AppLockViewModel(application: Application) : AndroidViewModel(application)
                 _unlockSuccess.value = true
             } else {
                 failedAttemptsCount++
-                _authError.value = "Incorrect PIN. Attempt $failedAttemptsCount of 3."
+                _authError.value = "رمز خاطئ. المحاولة $failedAttemptsCount من 3"
+                val shouldCapture = failedAttemptsCount >= 1 // Capture photo on failed attempt
+                val details = if (failedAttemptsCount >= 3) {
+                    "3 محاولات PIN خاطئة متتالية. تم التقاط سيلفي المتطفل."
+                } else {
+                    "محاولة PIN خاطئة ($enteredPin) - محاولة $failedAttemptsCount"
+                }
+
+                com.example.service.IntruderDetectionService.recordFailedAttempt(
+                    context = getApplication(),
+                    appName = appName,
+                    details = details,
+                    capturePhoto = shouldCapture
+                )
+
                 if (failedAttemptsCount >= 3) {
                     failedAttemptsCount = 0
-                    com.example.data.Camera2CaptureHelper.captureIntruderPhoto(getApplication()) { photoPath ->
-                        viewModelScope.launch {
-                            repository.logIntruder(
-                                IntruderLogEntity(
-                                    appName = appName,
-                                    timestamp = System.currentTimeMillis(),
-                                    details = "3 failed PIN attempts. Intruder selfie captured.",
-                                    photoPath = photoPath
-                                )
-                            )
-                        }
-                    }
-                } else {
-                    repository.logIntruder(
-                        IntruderLogEntity(
-                            appName = appName,
-                            timestamp = System.currentTimeMillis(),
-                            details = "Failed PIN attempt: $enteredPin"
-                        )
-                    )
                 }
             }
         }
@@ -176,31 +170,42 @@ class AppLockViewModel(application: Application) : AndroidViewModel(application)
                 _unlockSuccess.value = true
             } else {
                 failedAttemptsCount++
-                _authError.value = "Incorrect Pattern. Attempt $failedAttemptsCount of 3."
+                _authError.value = "نمط خاطئ. المحاولة $failedAttemptsCount من 3"
+                val shouldCapture = failedAttemptsCount >= 1
+                val details = if (failedAttemptsCount >= 3) {
+                    "3 محاولات نمط خاطئة متتالية. تم التقاط سيلفي المتطفل."
+                } else {
+                    "محاولة رسم نمط خاطئة - محاولة $failedAttemptsCount"
+                }
+
+                com.example.service.IntruderDetectionService.recordFailedAttempt(
+                    context = getApplication(),
+                    appName = appName,
+                    details = details,
+                    capturePhoto = shouldCapture
+                )
+
                 if (failedAttemptsCount >= 3) {
                     failedAttemptsCount = 0
-                    com.example.data.Camera2CaptureHelper.captureIntruderPhoto(getApplication()) { photoPath ->
-                        viewModelScope.launch {
-                            repository.logIntruder(
-                                IntruderLogEntity(
-                                    appName = appName,
-                                    timestamp = System.currentTimeMillis(),
-                                    details = "3 failed Pattern attempts. Intruder selfie captured.",
-                                    photoPath = photoPath
-                                )
-                            )
-                        }
-                    }
-                } else {
-                    repository.logIntruder(
-                        IntruderLogEntity(
-                            appName = appName,
-                            timestamp = System.currentTimeMillis(),
-                            details = "Failed Pattern attempt"
-                        )
-                    )
                 }
             }
+        }
+    }
+
+    fun testCaptureIntruderSelfie(appName: String = "تجربة الأمان") {
+        viewModelScope.launch {
+            com.example.service.IntruderDetectionService.recordFailedAttempt(
+                context = getApplication(),
+                appName = appName,
+                details = "تجربة التقاط سيلفي المتطفل من المعرض 📸",
+                capturePhoto = true
+            )
+        }
+    }
+
+    fun deleteIntruderLog(id: Long) {
+        viewModelScope.launch {
+            repository.deleteLog(id)
         }
     }
 

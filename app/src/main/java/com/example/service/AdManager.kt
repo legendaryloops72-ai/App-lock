@@ -99,23 +99,11 @@ object AdManager {
         }
     }
 
-    // تسجيل تفاصيل استجابة الوساطة والمزاد عند تحميل أي إعلان بنجاح
+    // تسجيل تفاصيل استجابة الإعلان عند تحميل أي إعلان بنجاح
     private fun logAdResponseInfo(responseInfo: ResponseInfo?, adType: String) {
         if (responseInfo == null) return
         try {
-            Log.d(TAG, "[$adType] Ad Loaded. ResponseID: ${responseInfo.responseId}, Adapter: ${responseInfo.adapterClassName}")
-            val loadedSource = responseInfo.loadedAdSourceResponse
-            if (loadedSource != null) {
-                Log.d(TAG, "[$adType] Loaded Ad Source: ${loadedSource.name} | Adapter: ${loadedSource.adapterClassName} | Latency: ${loadedSource.latencyMillis}ms")
-            }
-            val sources = responseInfo.adSourceResponses
-            if (!sources.isNullOrEmpty()) {
-                Log.d(TAG, "[$adType] Mediation / Bidding Candidate Sources: ${sources.size}")
-                sources.forEachIndexed { index, src ->
-                    val err = src.adError?.message ?: "None"
-                    Log.d(TAG, "[$adType] Candidate #$index: ${src.name} | Latency: ${src.latencyMillis}ms | Error: $err")
-                }
-            }
+            Log.d(TAG, "[$adType] Ad Loaded. ResponseInfo: $responseInfo")
         } catch (e: Exception) {
             Log.w(TAG, "Could not log response info: ${e.message}")
         }

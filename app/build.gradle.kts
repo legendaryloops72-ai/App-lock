@@ -11,7 +11,7 @@ plugins {
 
 android {
   namespace = "com.example"
-  compileSdk { version = release(36) { minorApiLevel = 1 } }
+  compileSdk = 36
 
   defaultConfig {
     applicationId = "com.aistudio.applock.abcd"
@@ -116,7 +116,7 @@ dependencies {
   implementation(libs.logging.interceptor)
   implementation(libs.moshi.kotlin)
   implementation(libs.okhttp)
-  implementation("com.google.android.libraries.ads.mobile.sdk:ads-mobile-sdk:0.13.0-alpha01")
+  implementation("com.google.android.libraries.ads.mobile.sdk:ads-mobile-sdk:1.4.0")
   // implementation(libs.play.services.location)
   implementation(libs.retrofit)
   testImplementation(libs.androidx.compose.ui.test.junit4)

@@ -30,8 +30,14 @@ interface AppLockDao {
     @Query("SELECT * FROM intruder_logs ORDER BY timestamp DESC")
     fun getAllIntruderLogs(): Flow<List<IntruderLogEntity>>
 
+    @Query("SELECT COUNT(*) FROM intruder_logs")
+    fun getIntruderLogsCount(): Flow<Int>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertIntruderLog(log: IntruderLogEntity)
+
+    @Query("DELETE FROM intruder_logs WHERE id = :id")
+    suspend fun deleteIntruderLog(id: Long)
 
     @Query("DELETE FROM intruder_logs")
     suspend fun clearIntruderLogs()
