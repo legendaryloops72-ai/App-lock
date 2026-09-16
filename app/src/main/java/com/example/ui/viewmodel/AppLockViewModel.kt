@@ -33,7 +33,7 @@ class AppLockViewModel(application: Application) : AndroidViewModel(application)
     private fun migrateLegacySecrets() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val current = repository.securitySettings.stateIn(this@AppLockViewModel.viewModelScope, SharingStarted.Eagerly, null).value
+                val current = repository.getSecuritySettingsOnce()
                 if (current != null) {
                     val pin = current.pin.takeIf { it.isNotBlank() && !isSha256(it) }?.let(::sha256) ?: current.pin
                     val pattern = current.patternSequence.takeIf { it.isNotBlank() && !isSha256(it) }?.let(::sha256) ?: current.patternSequence
