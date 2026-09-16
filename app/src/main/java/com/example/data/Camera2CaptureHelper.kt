@@ -10,7 +10,6 @@ import android.graphics.Color
 import android.graphics.ImageFormat
 import android.graphics.Matrix
 import android.graphics.Paint
-import android.graphics.Rect
 import android.hardware.camera2.*
 import android.media.ImageReader
 import android.os.Handler
@@ -48,7 +47,7 @@ object Camera2CaptureHelper {
         val backgroundThread = HandlerThread("IntruderCameraBackground").apply { start() }
         val backgroundHandler = Handler(backgroundThread.looper)
 
-        // Safety timeout to prevent hanging camera
+        // Safety timeout to prevent hanging camera access.
         var isCaptured = false
         val timeoutRunnable = Runnable {
             if (!isCaptured) {
@@ -71,7 +70,7 @@ object Camera2CaptureHelper {
                 }
             }
 
-            // Fallback to any camera if front camera is not found
+            // Fallback to any camera if front camera is not found.
             if (frontCameraId == null && cameraManager.cameraIdList.isNotEmpty()) {
                 frontCameraId = cameraManager.cameraIdList[0]
             }
@@ -88,7 +87,6 @@ object Camera2CaptureHelper {
             val map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
             val sizes = map?.getOutputSizes(ImageFormat.JPEG)
             val size = if (!sizes.isNullOrEmpty()) {
-                // Pick a medium resolution to save memory & storage
                 sizes.firstOrNull { it.width <= 1280 && it.height <= 960 } ?: sizes[0]
             } else {
                 android.util.Size(640, 480)
@@ -118,19 +116,17 @@ object Camera2CaptureHelper {
                         if (bitmap != null) {
                             val matrix = Matrix().apply {
                                 postRotate(sensorOrientation.toFloat())
-                                // Mirror horizontally if it's front camera
                                 postScale(-1f, 1f, bitmap.width / 2f, bitmap.height / 2f)
                             }
                             val rotatedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
-                            val outputStream = FileOutputStream(file)
-                            rotatedBitmap.compress(Bitmap.CompressFormat.JPEG, 85, outputStream)
-                            outputStream.flush()
-                            outputStream.close()
+                            FileOutputStream(file).use { outputStream ->
+                                rotatedBitmap.compress(Bitmap.CompressFormat.JPEG, 85, outputStream)
+                            }
+                            rotatedBitmap.recycle()
+                            bitmap.recycle()
                             onPhotoCaptured(file.absolutePath)
                         } else {
-                            val outputStream = FileOutputStream(file)
-                            outputStream.write(bytes)
-                            outputStream.close()
+                            FileOutputStream(file).use { outputStream -> outputStream.write(bytes) }
                             onPhotoCaptured(file.absolutePath)
                         }
                     } catch (e: Exception) {
@@ -144,7 +140,7 @@ object Camera2CaptureHelper {
                 try {
                     imageReader.close()
                     backgroundThread.quitSafely()
-                } catch (e: Exception) {}
+                } catch (_: Exception) {}
             }, backgroundHandler)
 
             cameraManager.openCamera(frontCameraId, object : CameraDevice.StateCallback() {
@@ -168,14 +164,12 @@ object Camera2CaptureHelper {
                                                 result: TotalCaptureResult
                                             ) {
                                                 super.onCaptureCompleted(session, request, result)
-                                                try {
-                                                    camera.close()
-                                                } catch (e: Exception) {}
+                                                try { camera.close() } catch (_: Exception) {}
                                             }
                                         }, backgroundHandler)
                                     } catch (e: Exception) {
                                         Log.e(TAG, "Error capturing request", e)
-                                        try { camera.close() } catch (ex: Exception) {}
+                                        try { camera.close() } catch (_: Exception) {}
                                         if (!isCaptured) {
                                             isCaptured = true
                                             backgroundHandler.removeCallbacks(timeoutRunnable)
@@ -186,7 +180,7 @@ object Camera2CaptureHelper {
                                 }
 
                                 override fun onConfigureFailed(session: CameraCaptureSession) {
-                                    try { camera.close() } catch (e: Exception) {}
+                                    try { camera.close() } catch (_: Exception) {}
                                     if (!isCaptured) {
                                         isCaptured = true
                                         backgroundHandler.removeCallbacks(timeoutRunnable)
@@ -199,7 +193,7 @@ object Camera2CaptureHelper {
                         )
                     } catch (e: Exception) {
                         Log.e(TAG, "Error creating capture session", e)
-                        try { camera.close() } catch (ex: Exception) {}
+                        try { camera.close() } catch (_: Exception) {}
                         if (!isCaptured) {
                             isCaptured = true
                             backgroundHandler.removeCallbacks(timeoutRunnable)
@@ -210,7 +204,8 @@ object Camera2CaptureHelper {
                 }
 
                 override fun onDisconnected(camera: CameraDevice) {
-                    try { camera.close() } catch (e: Exception) {}
+                    Log.w(TAG, "Camera disconnected, likely unavailable or claimed by another client")
+                    try { camera.close() } catch (_: Exception) {}
                     if (!isCaptured) {
                         isCaptured = true
                         backgroundHandler.removeCallbacks(timeoutRunnable)
@@ -220,7 +215,16 @@ object Camera2CaptureHelper {
                 }
 
                 override fun onError(camera: CameraDevice, error: Int) {
-                    try { camera.close() } catch (e: Exception) {}
+                    val reason = when (error) {
+                        CameraDevice.StateCallback.ERROR_CAMERA_IN_USE -> "camera already in use by another app"
+                        CameraDevice.StateCallback.ERROR_MAX_CAMERAS_IN_USE -> "maximum cameras already in use"
+                        CameraDevice.StateCallback.ERROR_CAMERA_DISABLED -> "camera disabled by system"
+                        CameraDevice.StateCallback.ERROR_CAMERA_DEVICE -> "camera device error"
+                        CameraDevice.StateCallback.ERROR_CAMERA_SERVICE -> "camera service error"
+                        else -> "unknown camera error ($error)"
+                    }
+                    Log.w(TAG, "Intruder selfie skipped: $reason. Target app will not be interrupted.")
+                    try { camera.close() } catch (_: Exception) {}
                     if (!isCaptured) {
                         isCaptured = true
                         backgroundHandler.removeCallbacks(timeoutRunnable)
@@ -239,8 +243,8 @@ object Camera2CaptureHelper {
     }
 
     /**
-     * Generates a stylized silhouette badge photo if hardware camera cannot be accessed,
-     * ensuring that intruder logs always have an aesthetic snapshot in test & preview environments.
+     * Generates a preview image when the real camera cannot be used.
+     * This is explicitly a fallback and is not presented as a real selfie.
      */
     private fun createFallbackIntruderImage(context: Context, dir: File, callback: (String?) -> Unit) {
         try {
@@ -249,23 +253,21 @@ object Camera2CaptureHelper {
             val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
             val canvas = Canvas(bitmap)
 
-            // Background dark gradient fill
             val bgPaint = Paint().apply {
                 color = Color.rgb(20, 26, 38)
                 style = Paint.Style.FILL
             }
             canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), bgPaint)
 
-            // Stylized Intruder silhouette / shield drawing
             val circlePaint = Paint().apply {
-                color = Color.rgb(220, 53, 69) // Crimson alert
+                color = Color.rgb(220, 53, 69)
                 style = Paint.Style.FILL
                 isAntiAlias = true
             }
             canvas.drawCircle(width / 2f, height / 2f - 40, 100f, circlePaint)
 
             val headPaint = Paint().apply {
-                color = Color.rgb(255, 255, 255)
+                color = Color.WHITE
                 style = Paint.Style.FILL
                 isAntiAlias = true
             }
@@ -276,7 +278,6 @@ object Camera2CaptureHelper {
                 0f, -180f, true, headPaint
             )
 
-            // Timestamp and alert text
             val textPaint = Paint().apply {
                 color = Color.WHITE
                 textSize = 28f
@@ -284,7 +285,7 @@ object Camera2CaptureHelper {
                 isAntiAlias = true
                 isFakeBoldText = true
             }
-            canvas.drawText("⚠️ INTRUDER SELFIE SNAPSHOT", width / 2f, height - 90f, textPaint)
+            canvas.drawText("⚠️ INTRUDER ALERT", width / 2f, height - 90f, textPaint)
 
             val dateStr = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
             val subTextPaint = Paint().apply {
@@ -293,14 +294,11 @@ object Camera2CaptureHelper {
                 textAlign = Paint.Align.CENTER
                 isAntiAlias = true
             }
-            canvas.drawText("Front Camera Triggered • $dateStr", width / 2f, height - 50f, subTextPaint)
+            canvas.drawText("Camera unavailable • $dateStr", width / 2f, height - 50f, subTextPaint)
 
             val file = File(dir, "intruder_${System.currentTimeMillis()}.jpg")
-            val fos = FileOutputStream(file)
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, fos)
-            fos.flush()
-            fos.close()
-
+            FileOutputStream(file).use { fos -> bitmap.compress(Bitmap.CompressFormat.JPEG, 90, fos) }
+            bitmap.recycle()
             callback(file.absolutePath)
         } catch (e: Exception) {
             Log.e(TAG, "Failed creating fallback intruder image", e)
