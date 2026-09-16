@@ -24,6 +24,10 @@ class AppLockRepository(private val dao: AppLockDao) {
         return dao.getAppList()
     }
 
+    suspend fun getSecuritySettingsOnce(): SecuritySettingsEntity? {
+        return dao.getSecuritySettingsOnce()
+    }
+
     suspend fun saveSettings(settings: SecuritySettingsEntity) {
         dao.insertOrUpdateSettings(settings)
     }
