@@ -16,7 +16,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import android.content.Intent
-import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import java.security.MessageDigest
@@ -38,9 +37,7 @@ class AppLockViewModel(application: Application) : AndroidViewModel(application)
                 if (current != null) {
                     val pin = current.pin.takeIf { it.isNotBlank() && !isSha256(it) }?.let(::sha256) ?: current.pin
                     val pattern = current.patternSequence.takeIf { it.isNotBlank() && !isSha256(it) }?.let(::sha256) ?: current.patternSequence
-                    if (pin != current.pin || pattern != current.patternSequence) {
-                        repository.saveSettings(current.copy(pin = pin, patternSequence = pattern))
-                    }
+                    if (pin != current.pin || pattern != current.patternSequence) repository.saveSettings(current.copy(pin = pin, patternSequence = pattern))
                 }
             } catch (_: Exception) { }
         }
@@ -56,7 +53,6 @@ class AppLockViewModel(application: Application) : AndroidViewModel(application)
                 val ourPackageName = context.packageName
                 val launcherIntent = Intent(Intent.ACTION_MAIN, null).apply { addCategory(Intent.CATEGORY_LAUNCHER) }
                 val resolveInfos = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) pm.queryIntentActivities(launcherIntent, PackageManager.ResolveInfoFlags.of(0)) else @Suppress("DEPRECATION") pm.queryIntentActivities(launcherIntent, 0)
-                val installedApps = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) pm.getInstalledApplications(PackageManager.ApplicationInfoFlags.of(0)) else @Suppress("DEPRECATION") pm.getInstalledApplications(0)
                 val existingApps = repository.getExistingApps().associateBy { it.packageName }
                 val discoveredPackages = mutableMapOf<String, String>()
                 for (info in resolveInfos) {
@@ -64,17 +60,6 @@ class AppLockViewModel(application: Application) : AndroidViewModel(application)
                     if (pkg == ourPackageName) continue
                     val name = info.loadLabel(pm).toString()
                     if (name.isNotBlank()) discoveredPackages[pkg] = name
-                }
-                for (appInfo in installedApps) {
-                    val pkg = appInfo.packageName
-                    if (pkg == ourPackageName || discoveredPackages.containsKey(pkg)) continue
-                    val isUserApp = (appInfo.flags and ApplicationInfo.FLAG_SYSTEM) == 0 || (appInfo.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0
-                    val isLaunchable = pm.getLaunchIntentForPackage(pkg) != null
-                    val isEssentialSystemApp = pkg == "com.android.settings" || pkg == "com.android.vending" || pkg.contains("camera") || pkg.contains("gallery") || pkg.contains("browser") || pkg.contains("chrome") || pkg.contains("calculator") || pkg.contains("contacts") || pkg.contains("dialer") || pkg.contains("mms") || pkg.contains("deskclock")
-                    if (isUserApp || isLaunchable || isEssentialSystemApp) {
-                        val name = try { appInfo.loadLabel(pm).toString() } catch (_: Exception) { pkg }
-                        if (name.isNotBlank()) discoveredPackages[pkg] = name
-                    }
                 }
                 val newAppsToInsert = mutableListOf<ProtectedAppEntity>()
                 for ((pkg, name) in discoveredPackages) if (!existingApps.containsKey(pkg)) {
