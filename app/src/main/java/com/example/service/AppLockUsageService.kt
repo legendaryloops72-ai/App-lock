@@ -1,10 +1,15 @@
 package com.example.service
 
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.app.Service
 import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.IBinder
+import androidx.core.app.NotificationCompat
 import com.example.data.AppLockDatabase
 import com.example.MainActivity
 import kotlinx.coroutines.*
@@ -13,6 +18,17 @@ import kotlinx.coroutines.flow.first
 class AppLockUsageService : Service() {
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var job: Job? = null
+
+    companion object {
+        private const val CHANNEL_ID = "app_lock_monitor"
+        private const val NOTIFICATION_ID = 1001
+    }
+
+    override fun onCreate() {
+        super.onCreate()
+        createNotificationChannel()
+        startForeground(NOTIFICATION_ID, buildNotification())
+    }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -62,8 +78,34 @@ class AppLockUsageService : Service() {
         }
     }
 
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val manager = getSystemService(NotificationManager::class.java)
+            val channel = NotificationChannel(
+                CHANNEL_ID,
+                "App Lock protection",
+                NotificationManager.IMPORTANCE_LOW
+            ).apply {
+                description = "Keeps App Lock protection available after device restart"
+                setShowBadge(false)
+            }
+            manager.createNotificationChannel(channel)
+        }
+    }
+
+    private fun buildNotification(): Notification {
+        return NotificationCompat.Builder(this, CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.ic_lock_lock)
+            .setContentTitle("App Lock protection")
+            .setContentText("App protection is active")
+            .setOngoing(true)
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .build()
+    }
+
     override fun onDestroy() {
-        super.onDestroy()
         job?.cancel()
+        serviceScope.cancel()
+        super.onDestroy()
     }
 }
