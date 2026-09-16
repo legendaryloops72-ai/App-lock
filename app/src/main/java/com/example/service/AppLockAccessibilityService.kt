@@ -96,8 +96,7 @@ class AppLockAccessibilityService : AccessibilityService() {
 
         // Use in-memory snapshots for the hot accessibility-event path.
         // Room is observed above and only updates these snapshots when data changes.
-        if (isUninstallProtectionEnabled &&
-            (packageName == "com.android.settings" || packageName.contains("packageinstaller"))) {
+        if (isUninstallProtectionEnabled && isUninstallOrForceStopScreen(packageName)) {
             val rootNode = rootInActiveWindow
             if (isAppInfoOrUninstallOfOurApp(rootNode)) {
                 val intent = Intent(applicationContext, MainActivity::class.java).apply {
@@ -119,6 +118,14 @@ class AppLockAccessibilityService : AccessibilityService() {
         startActivity(intent)
     }
 
+    private fun isUninstallOrForceStopScreen(packageName: String): Boolean {
+        return packageName == "com.android.settings" ||
+            packageName.contains("packageinstaller") ||
+            packageName.contains("package.installer") ||
+            packageName.contains("permissioncontroller") ||
+            packageName.contains("packageinstaller")
+    }
+
     private fun isAppInfoOrUninstallOfOurApp(root: AccessibilityNodeInfo?): Boolean {
         if (root == null) return false
         val nodes = Stack<AccessibilityNodeInfo>()
@@ -126,32 +133,45 @@ class AppLockAccessibilityService : AccessibilityService() {
 
         var containsOurAppRef = false
         var containsUninstallOrForceStop = false
-        val ourPackage = applicationContext.packageName ?: "com.example"
+        val ourPackage = applicationContext.packageName
+        val ourLabels = setOf(
+            "applock",
+            "قفل التطبيقات",
+            "حاسبة آمنة",
+            "طقس اليوم",
+            "متصفح الإنترنت",
+            "my application"
+        )
+        val actionKeywords = setOf(
+            "uninstall",
+            "uninstall app",
+            "force stop",
+            "remove app",
+            "إلغاء التثبيت",
+            "إزالة التطبيق",
+            "إيقاف إجباري",
+            "إيقاف فرض",
+            "فرض الإيقاف",
+            "desinstalar",
+            "forzar detención",
+            "désinstaller",
+            "arrêter de force",
+            "deinstallieren",
+            "beenden erzwingen"
+        )
 
         while (nodes.isNotEmpty()) {
             val node = nodes.pop() ?: continue
-            val text = node.text?.toString()?.lowercase() ?: ""
+            val text = (node.text?.toString() ?: "").trim().lowercase()
+            val contentDescription = (node.contentDescription?.toString() ?: "").trim().lowercase()
+            val combinedText = "$text $contentDescription"
 
-            // Check if node contains our package or app name references
-            if (text.contains(ourPackage) ||
-                text.contains("applock") ||
-                text.contains("قفل التطبيقات") ||
-                text.contains("حاسبة آمنة") ||
-                text.contains("طقس اليوم") ||
-                text.contains("متصفح الإنترنت") ||
-                text.contains("my application")) {
+            if (combinedText.contains(ourPackage.lowercase()) ||
+                ourLabels.any { combinedText.contains(it) }) {
                 containsOurAppRef = true
             }
 
-            // Check for uninstall or force-stop keywords across multiple languages
-            if (text.contains("uninstall") ||
-                text.contains("force stop") ||
-                text.contains("إلغاء التثبيت") ||
-                text.contains("إيقاف إجباري") ||
-                text.contains("إيقاف فرض") ||
-                text.contains("فرض الإيقاف") ||
-                text.contains("desinstalar") ||
-                text.contains("forzar detención")) {
+            if (actionKeywords.any { combinedText.contains(it) }) {
                 containsUninstallOrForceStop = true
             }
 
