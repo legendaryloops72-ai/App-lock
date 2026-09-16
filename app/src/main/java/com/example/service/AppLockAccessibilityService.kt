@@ -8,8 +8,9 @@ import com.example.data.AppLockDatabase
 import com.example.MainActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.util.Stack
@@ -20,7 +21,7 @@ class AppLockAccessibilityService : AccessibilityService() {
     private var cacheJob: Job? = null
 
     @Volatile
-    private var lockedPackages: Set<String> = emptySet()
+    private var lockedApps: Map<String, String> = emptyMap()
 
     @Volatile
     private var isUninstallProtectionEnabled = false
@@ -39,7 +40,7 @@ class AppLockAccessibilityService : AccessibilityService() {
     override fun onDestroy() {
         cacheJob?.cancel()
         serviceScope.cancel()
-        lockedPackages = emptySet()
+        lockedApps = emptyMap()
         isUninstallProtectionEnabled = false
         isServiceRunning = false
         super.onDestroy()
@@ -65,10 +66,9 @@ class AppLockAccessibilityService : AccessibilityService() {
             val db = AppLockDatabase.getDatabase(applicationContext)
             launch {
                 db.appLockDao().getAllApps().collectLatest { apps ->
-                    lockedPackages = apps.asSequence()
+                    lockedApps = apps.asSequence()
                         .filter { it.isLocked }
-                        .map { it.packageName }
-                        .toSet()
+                        .associate { it.packageName to it.appName }
                 }
             }
             launch {
@@ -94,8 +94,8 @@ class AppLockAccessibilityService : AccessibilityService() {
             unlockedPackage = null
         }
 
-        // Use the in-memory snapshot for the hot accessibility-event path.
-        // Room is observed above and only updates this snapshot when data changes.
+        // Use in-memory snapshots for the hot accessibility-event path.
+        // Room is observed above and only updates these snapshots when data changes.
         if (isUninstallProtectionEnabled &&
             (packageName == "com.android.settings" || packageName.contains("packageinstaller"))) {
             val rootNode = rootInActiveWindow
@@ -110,20 +110,13 @@ class AppLockAccessibilityService : AccessibilityService() {
             }
         }
 
-        val app = if (lockedPackages.contains(packageName)) {
-            packageName
-        } else {
-            null
+        val appName = lockedApps[packageName] ?: return
+        val intent = Intent(applicationContext, MainActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            putExtra("INTERCEPT_PACKAGE", packageName)
+            putExtra("INTERCEPT_NAME", appName)
         }
-
-        if (app != null) {
-            val intent = Intent(applicationContext, MainActivity::class.java).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                putExtra("INTERCEPT_PACKAGE", app)
-                putExtra("INTERCEPT_NAME", packageName)
-            }
-            startActivity(intent)
-        }
+        startActivity(intent)
     }
 
     private fun isAppInfoOrUninstallOfOurApp(root: AccessibilityNodeInfo?): Boolean {
