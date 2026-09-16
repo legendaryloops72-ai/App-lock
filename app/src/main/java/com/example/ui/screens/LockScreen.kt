@@ -62,7 +62,7 @@ fun LockScreen(
     // while it is visible so the underlying protected app cannot be exposed.
     BackHandler(enabled = true) {
         // Intentionally consume Back. The user must authenticate or use the
-        // explicit Cancel button below, which sends the task to the background.
+        // explicit Cancel button below, which returns to the launcher.
     }
 
     var enteredPin by remember { mutableStateOf("") }
@@ -354,9 +354,15 @@ fun LockScreen(
 
             // Cancel / Dismiss button
             Button(
-                onClick = { 
+                onClick = {
                     viewModel.dismissLockScreen()
-                    (context as? android.app.Activity)?.moveTaskToBack(true)
+                    com.example.service.AppLockAccessibilityService.unlockedPackage = null
+                    val homeIntent = android.content.Intent(android.content.Intent.ACTION_MAIN).apply {
+                        addCategory(android.content.Intent.CATEGORY_HOME)
+                        addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                    context.startActivity(homeIntent)
+                    (context as? android.app.Activity)?.finishAndRemoveTask()
                 },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.surfaceVariant,
