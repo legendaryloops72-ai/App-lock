@@ -30,6 +30,9 @@ interface AppLockDao {
     @Query("SELECT * FROM security_settings WHERE id = 1")
     fun getSecuritySettings(): Flow<SecuritySettingsEntity?>
 
+    @Query("SELECT * FROM security_settings WHERE id = 1 LIMIT 1")
+    suspend fun getSecuritySettingsOnce(): SecuritySettingsEntity?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOrUpdateSettings(settings: SecuritySettingsEntity)
 
