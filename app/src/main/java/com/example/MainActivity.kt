@@ -1,6 +1,7 @@
 package com.example
 
 import android.os.Bundle
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -50,6 +51,10 @@ class MainActivity : androidx.fragment.app.FragmentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     installSplashScreen()
     super.onCreate(savedInstanceState)
+
+    // Prevent screenshots, screen recording, and sensitive previews in Recent Apps.
+    window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+
     enableEdgeToEdge()
     
     try {
