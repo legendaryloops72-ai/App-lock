@@ -9,13 +9,22 @@ import com.example.MainActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.util.Stack
 
 class AppLockAccessibilityService : AccessibilityService() {
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private var cacheJob: Job? = null
+
+    @Volatile
+    private var lockedPackages: Set<String> = emptySet()
+
+    @Volatile
+    private var isUninstallProtectionEnabled = false
+
     companion object {
         var isServiceRunning = false
         var unlockedPackage: String? = null
@@ -24,11 +33,16 @@ class AppLockAccessibilityService : AccessibilityService() {
     override fun onCreate() {
         super.onCreate()
         isServiceRunning = true
+        startCacheObservers()
     }
 
     override fun onDestroy() {
-        super.onDestroy()
+        cacheJob?.cancel()
+        serviceScope.cancel()
+        lockedPackages = emptySet()
+        isUninstallProtectionEnabled = false
         isServiceRunning = false
+        super.onDestroy()
     }
 
     override fun onUnbind(intent: Intent?): Boolean {
@@ -39,6 +53,30 @@ class AppLockAccessibilityService : AccessibilityService() {
     override fun onServiceConnected() {
         super.onServiceConnected()
         isServiceRunning = true
+        if (cacheJob?.isActive != true) {
+            startCacheObservers()
+        }
+    }
+
+    private fun startCacheObservers() {
+        if (cacheJob?.isActive == true) return
+
+        cacheJob = serviceScope.launch {
+            val db = AppLockDatabase.getDatabase(applicationContext)
+            launch {
+                db.appLockDao().getAllApps().collectLatest { apps ->
+                    lockedPackages = apps.asSequence()
+                        .filter { it.isLocked }
+                        .map { it.packageName }
+                        .toSet()
+                }
+            }
+            launch {
+                db.appLockDao().getSecuritySettings().collectLatest { settings ->
+                    isUninstallProtectionEnabled = settings?.uninstallProtectionEnabled ?: false
+                }
+            }
+        }
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
@@ -56,40 +94,35 @@ class AppLockAccessibilityService : AccessibilityService() {
             unlockedPackage = null
         }
 
-        serviceScope.launch {
-            try {
-                val db = AppLockDatabase.getDatabase(applicationContext)
-                val settings = db.appLockDao().getSecuritySettings().first()
-                val isUninstallProtectionEnabled = settings?.uninstallProtectionEnabled ?: false
-
-                if (isUninstallProtectionEnabled && 
-                    (packageName == "com.android.settings" || packageName.contains("packageinstaller"))) {
-                    
-                    val rootNode = rootInActiveWindow
-                    if (isAppInfoOrUninstallOfOurApp(rootNode)) {
-                        val intent = Intent(applicationContext, MainActivity::class.java).apply {
-                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                            putExtra("INTERCEPT_PACKAGE", packageName)
-                            putExtra("INTERCEPT_NAME", "إعدادات الأمان (AppLock)")
-                        }
-                        startActivity(intent)
-                        return@launch
-                    }
+        // Use the in-memory snapshot for the hot accessibility-event path.
+        // Room is observed above and only updates this snapshot when data changes.
+        if (isUninstallProtectionEnabled &&
+            (packageName == "com.android.settings" || packageName.contains("packageinstaller"))) {
+            val rootNode = rootInActiveWindow
+            if (isAppInfoOrUninstallOfOurApp(rootNode)) {
+                val intent = Intent(applicationContext, MainActivity::class.java).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                    putExtra("INTERCEPT_PACKAGE", packageName)
+                    putExtra("INTERCEPT_NAME", "إعدادات الأمان (AppLock)")
                 }
-
-                // Standard App Locking
-                val app = db.appLockDao().getAllApps().first().find { it.packageName == packageName }
-                if (app != null && app.isLocked) {
-                    val intent = Intent(applicationContext, MainActivity::class.java).apply {
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                        putExtra("INTERCEPT_PACKAGE", app.packageName)
-                        putExtra("INTERCEPT_NAME", app.appName)
-                    }
-                    startActivity(intent)
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
+                startActivity(intent)
+                return
             }
+        }
+
+        val app = if (lockedPackages.contains(packageName)) {
+            packageName
+        } else {
+            null
+        }
+
+        if (app != null) {
+            val intent = Intent(applicationContext, MainActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                putExtra("INTERCEPT_PACKAGE", app)
+                putExtra("INTERCEPT_NAME", packageName)
+            }
+            startActivity(intent)
         }
     }
 
@@ -97,42 +130,42 @@ class AppLockAccessibilityService : AccessibilityService() {
         if (root == null) return false
         val nodes = Stack<AccessibilityNodeInfo>()
         nodes.push(root)
-        
+
         var containsOurAppRef = false
         var containsUninstallOrForceStop = false
         val ourPackage = applicationContext.packageName ?: "com.example"
-        
+
         while (nodes.isNotEmpty()) {
             val node = nodes.pop() ?: continue
             val text = node.text?.toString()?.lowercase() ?: ""
-            
+
             // Check if node contains our package or app name references
-            if (text.contains(ourPackage) || 
+            if (text.contains(ourPackage) ||
                 text.contains("applock") ||
-                text.contains("قفل التطبيقات") || 
-                text.contains("حاسبة آمنة") || 
+                text.contains("قفل التطبيقات") ||
+                text.contains("حاسبة آمنة") ||
                 text.contains("طقس اليوم") ||
                 text.contains("متصفح الإنترنت") ||
                 text.contains("my application")) {
                 containsOurAppRef = true
             }
-            
+
             // Check for uninstall or force-stop keywords across multiple languages
-            if (text.contains("uninstall") || 
-                text.contains("force stop") || 
-                text.contains("إلغاء التثبيت") || 
-                text.contains("إيقاف إجباري") || 
-                text.contains("إيقاف فرض") || 
+            if (text.contains("uninstall") ||
+                text.contains("force stop") ||
+                text.contains("إلغاء التثبيت") ||
+                text.contains("إيقاف إجباري") ||
+                text.contains("إيقاف فرض") ||
                 text.contains("فرض الإيقاف") ||
                 text.contains("desinstalar") ||
                 text.contains("forzar detención")) {
                 containsUninstallOrForceStop = true
             }
-            
+
             if (containsOurAppRef && containsUninstallOrForceStop) {
                 return true
             }
-            
+
             for (i in 0 until node.childCount) {
                 val child = node.getChild(i)
                 if (child != null) {
