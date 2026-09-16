@@ -1,5 +1,6 @@
 package com.example.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -56,6 +57,13 @@ fun LockScreen(
     val settings by viewModel.settings.collectAsState()
     val authError by viewModel.authError.collectAsState()
     val unlockSuccess by viewModel.unlockSuccess.collectAsState()
+
+    // The lock screen is a security boundary. Consume system Back gestures/buttons
+    // while it is visible so the underlying protected app cannot be exposed.
+    BackHandler(enabled = true) {
+        // Intentionally consume Back. The user must authenticate or use the
+        // explicit Cancel button below, which sends the task to the background.
+    }
 
     var enteredPin by remember { mutableStateOf("") }
     var showSuccessCelebration by remember { mutableStateOf(false) }
