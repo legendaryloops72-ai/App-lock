@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
@@ -20,6 +19,7 @@ import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Build
+import java.security.MessageDigest
 
 class AppLockViewModel(application: Application) : AndroidViewModel(application) {
     private val repository: AppLockRepository
@@ -41,7 +41,6 @@ class AppLockViewModel(application: Application) : AndroidViewModel(application)
                 val pm = context.packageManager
                 val ourPackageName = context.packageName
 
-                // 1. Query all launcher apps
                 val launcherIntent = Intent(Intent.ACTION_MAIN, null).apply {
                     addCategory(Intent.CATEGORY_LAUNCHER)
                 }
@@ -52,7 +51,6 @@ class AppLockViewModel(application: Application) : AndroidViewModel(application)
                     pm.queryIntentActivities(launcherIntent, 0)
                 }
 
-                // 2. Query all installed applications
                 val installedApps = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     pm.getInstalledApplications(PackageManager.ApplicationInfoFlags.of(0))
                 } else {
@@ -61,48 +59,31 @@ class AppLockViewModel(application: Application) : AndroidViewModel(application)
                 }
 
                 val existingApps = repository.getExistingApps().associateBy { it.packageName }
-                val discoveredPackages = mutableMapOf<String, String>() // packageName -> appName
+                val discoveredPackages = mutableMapOf<String, String>()
 
-                // Process launcher activities
                 for (info in resolveInfos) {
                     val pkg = info.activityInfo.packageName
                     if (pkg == ourPackageName) continue
                     val name = info.loadLabel(pm).toString()
-                    if (name.isNotBlank()) {
-                        discoveredPackages[pkg] = name
-                    }
+                    if (name.isNotBlank()) discoveredPackages[pkg] = name
                 }
 
-                // Process installed applications (user apps, launchable apps, settings, system tools)
                 for (appInfo in installedApps) {
                     val pkg = appInfo.packageName
-                    if (pkg == ourPackageName) continue
-                    if (discoveredPackages.containsKey(pkg)) continue
+                    if (pkg == ourPackageName || discoveredPackages.containsKey(pkg)) continue
 
                     val isUserApp = (appInfo.flags and ApplicationInfo.FLAG_SYSTEM) == 0 ||
                             (appInfo.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0
                     val isLaunchable = pm.getLaunchIntentForPackage(pkg) != null
                     val isEssentialSystemApp = pkg == "com.android.settings" ||
-                            pkg == "com.android.vending" ||
-                            pkg.contains("camera") ||
-                            pkg.contains("gallery") ||
-                            pkg.contains("browser") ||
-                            pkg.contains("chrome") ||
-                            pkg.contains("calculator") ||
-                            pkg.contains("contacts") ||
-                            pkg.contains("dialer") ||
-                            pkg.contains("mms") ||
-                            pkg.contains("deskclock")
+                            pkg == "com.android.vending" || pkg.contains("camera") ||
+                            pkg.contains("gallery") || pkg.contains("browser") || pkg.contains("chrome") ||
+                            pkg.contains("calculator") || pkg.contains("contacts") || pkg.contains("dialer") ||
+                            pkg.contains("mms") || pkg.contains("deskclock")
 
                     if (isUserApp || isLaunchable || isEssentialSystemApp) {
-                        val name = try {
-                            appInfo.loadLabel(pm).toString()
-                        } catch (e: Exception) {
-                            pkg
-                        }
-                        if (name.isNotBlank()) {
-                            discoveredPackages[pkg] = name
-                        }
+                        val name = try { appInfo.loadLabel(pm).toString() } catch (e: Exception) { pkg }
+                        if (name.isNotBlank()) discoveredPackages[pkg] = name
                     }
                 }
 
@@ -115,20 +96,11 @@ class AppLockViewModel(application: Application) : AndroidViewModel(application)
                             pkg.contains("youtube") || pkg.contains("photo") || pkg.contains("gallery") || pkg.contains("music") || pkg.contains("video") || pkg.contains("netflix") || pkg.contains("spotify") || pkg.contains("media") -> "Media"
                             else -> "System"
                         }
-                        newAppsToInsert.add(
-                            ProtectedAppEntity(
-                                packageName = pkg,
-                                appName = name,
-                                isLocked = false,
-                                category = category
-                            )
-                        )
+                        newAppsToInsert.add(ProtectedAppEntity(pkg, name, false, category))
                     }
                 }
 
-                if (newAppsToInsert.isNotEmpty()) {
-                    repository.insertNewApps(newAppsToInsert)
-                }
+                if (newAppsToInsert.isNotEmpty()) repository.insertNewApps(newAppsToInsert)
             } catch (e: Exception) {
                 // Fallback gracefully
             }
@@ -137,31 +109,20 @@ class AppLockViewModel(application: Application) : AndroidViewModel(application)
 
     val apps: StateFlow<List<ProtectedAppEntity>> = repository.allApps
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
     val settings: StateFlow<SecuritySettingsEntity?> = repository.securitySettings
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
-
     val intruderLogs: StateFlow<List<IntruderLogEntity>> = repository.intruderLogs
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    // UI Search and Filter State
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
-
     private val _selectedCategory = MutableStateFlow("All")
     val selectedCategory: StateFlow<String> = _selectedCategory.asStateFlow()
-
-    // Navigation trigger from notifications or external intents
     private val _pendingNavigation = MutableStateFlow<String?>(null)
     val pendingNavigation: StateFlow<String?> = _pendingNavigation.asStateFlow()
 
-    fun setPendingNavigation(route: String?) {
-        _pendingNavigation.value = route
-    }
-
-    fun clearPendingNavigation() {
-        _pendingNavigation.value = null
-    }
+    fun setPendingNavigation(route: String?) { _pendingNavigation.value = route }
+    fun clearPendingNavigation() { _pendingNavigation.value = null }
 
     fun checkAndNotifyUnseenIntruders(context: android.content.Context) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -171,65 +132,37 @@ class AppLockViewModel(application: Application) : AndroidViewModel(application)
                     val prefs = context.getSharedPreferences("intruder_prefs", android.content.Context.MODE_PRIVATE)
                     val lastNotifiedId = prefs.getLong("last_notified_intruder_id", 0L)
                     val lastSeenId = prefs.getLong("last_seen_intruder_id", 0L)
-                    val unnotifiedLogs = currentLogs.filter { it.id > lastNotifiedId && it.id > lastSeenId }
-                    val latestLog = unnotifiedLogs.maxByOrNull { it.id }
+                    val latestLog = currentLogs.filter { it.id > lastNotifiedId && it.id > lastSeenId }.maxByOrNull { it.id }
                     if (latestLog != null) {
-                        com.example.service.IntruderDetectionService.showIntruderNotification(
-                            context = context,
-                            appName = latestLog.appName,
-                            hasPhoto = latestLog.photoPath != null,
-                            logId = latestLog.id
-                        )
+                        com.example.service.IntruderDetectionService.showIntruderNotification(context, latestLog.appName, latestLog.photoPath != null, latestLog.id)
                     }
                 }
-            } catch (e: Exception) {
-                // Ignore gracefully
-            }
+            } catch (e: Exception) { }
         }
     }
 
-    // Interception / Lock Screen Simulation State
     private val _interceptedPackageName = MutableStateFlow<String?>(null)
     val interceptedPackageName: StateFlow<String?> = _interceptedPackageName.asStateFlow()
-
     private val _interceptedAppName = MutableStateFlow<String?>(null)
     val interceptedAppName: StateFlow<String?> = _interceptedAppName.asStateFlow()
-
     private val _unlockSuccess = MutableStateFlow(false)
     val unlockSuccess: StateFlow<Boolean> = _unlockSuccess.asStateFlow()
-
-    // Authentication result state for lock screen
     private val _authError = MutableStateFlow<String?>(null)
     val authError: StateFlow<String?> = _authError.asStateFlow()
     private val _isSelfLocked = MutableStateFlow(true)
     val isSelfLocked: StateFlow<Boolean> = _isSelfLocked.asStateFlow()
     private var ignoreNextLock = false
+
     fun ignoreNextSelfLock() { ignoreNextLock = true }
     fun checkAndRequireSelfAuth(timeoutMs: Long, backgroundTime: Long) {
-        if (ignoreNextLock) {
-            ignoreNextLock = false
-            return
-        }
-        if (backgroundTime > 0 && System.currentTimeMillis() - backgroundTime > timeoutMs) {
-            _isSelfLocked.value = true
-        }
+        if (ignoreNextLock) { ignoreNextLock = false; return }
+        if (backgroundTime > 0 && System.currentTimeMillis() - backgroundTime > timeoutMs) _isSelfLocked.value = true
     }
     fun unlockSelf() { _isSelfLocked.value = false }
     fun requireSelfAuth() { _isSelfLocked.value = true }
-
-    fun setSearchQuery(query: String) {
-        _searchQuery.value = query
-    }
-
-    fun setSelectedCategory(category: String) {
-        _selectedCategory.value = category
-    }
-
-    fun toggleAppLock(app: ProtectedAppEntity) {
-        viewModelScope.launch {
-            repository.updateApp(app.copy(isLocked = !app.isLocked))
-        }
-    }
+    fun setSearchQuery(query: String) { _searchQuery.value = query }
+    fun setSelectedCategory(category: String) { _selectedCategory.value = category }
+    fun toggleAppLock(app: ProtectedAppEntity) { viewModelScope.launch { repository.updateApp(app.copy(isLocked = !app.isLocked)) } }
 
     fun triggerIntercept(packageName: String, appName: String) {
         _interceptedPackageName.value = packageName
@@ -239,17 +172,8 @@ class AppLockViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun triggerAppLaunch(app: ProtectedAppEntity) {
-        if (app.isLocked) {
-            _interceptedPackageName.value = app.packageName
-            _interceptedAppName.value = app.appName
-            _unlockSuccess.value = false
-            _authError.value = null
-        } else {
-            // Unlocked app opens immediately
-            _interceptedPackageName.value = null
-            _interceptedAppName.value = null
-            _unlockSuccess.value = false
-        }
+        if (app.isLocked) triggerIntercept(app.packageName, app.appName)
+        else dismissLockScreen()
     }
 
     fun dismissLockScreen() {
@@ -257,62 +181,43 @@ class AppLockViewModel(application: Application) : AndroidViewModel(application)
         _interceptedAppName.value = null
         _unlockSuccess.value = false
         _authError.value = null
+        com.example.service.AppLockAccessibilityService.unlockedPackage = null
     }
 
-    fun onBiometricSuccess() {
-        _unlockSuccess.value = true
-    }
+    fun onBiometricSuccess() { _unlockSuccess.value = true }
 
     fun unlockSuccessful() {
-        _interceptedPackageName.value?.let { pkg ->
-            com.example.service.AppLockAccessibilityService.unlockedPackage = pkg
-        }
+        _interceptedPackageName.value?.let { pkg -> com.example.service.AppLockAccessibilityService.unlockedPackage = pkg }
         _interceptedPackageName.value = null
         _interceptedAppName.value = null
         _unlockSuccess.value = false
         _authError.value = null
     }
 
-    fun setAuthError(error: String?) {
-        _authError.value = error
-    }
+    fun setAuthError(error: String?) { _authError.value = error }
 
     private var failedAttemptsCount = 0
 
     fun verifyPin(enteredPin: String, currentSettings: SecuritySettingsEntity, appName: String) {
         viewModelScope.launch {
-            if (enteredPin == currentSettings.pin) {
-                // Success!
+            if (verifySecret(enteredPin, currentSettings.pin)) {
                 failedAttemptsCount = 0
                 _authError.value = null
                 _unlockSuccess.value = true
             } else {
                 failedAttemptsCount++
                 _authError.value = "رمز خاطئ. المحاولة $failedAttemptsCount من 3"
-                val shouldCapture = failedAttemptsCount >= 1 // Capture photo on failed attempt
-                val details = if (failedAttemptsCount >= 3) {
-                    "3 محاولات PIN خاطئة متتالية. تم التقاط سيلفي المتطفل."
-                } else {
-                    "محاولة PIN خاطئة ($enteredPin) - محاولة $failedAttemptsCount"
-                }
-
-                com.example.service.IntruderDetectionService.recordFailedAttempt(
-                    context = getApplication(),
-                    appName = appName,
-                    details = details,
-                    capturePhoto = shouldCapture
-                )
-
-                if (failedAttemptsCount >= 3) {
-                    failedAttemptsCount = 0
-                }
+                val shouldCapture = failedAttemptsCount >= 1
+                val details = if (failedAttemptsCount >= 3) "3 محاولات PIN خاطئة متتالية. تم التقاط سيلفي المتطفل." else "محاولة PIN خاطئة - محاولة $failedAttemptsCount"
+                com.example.service.IntruderDetectionService.recordFailedAttempt(getApplication(), appName, details, shouldCapture)
+                if (failedAttemptsCount >= 3) failedAttemptsCount = 0
             }
         }
     }
 
     fun verifyPattern(enteredPattern: String, currentSettings: SecuritySettingsEntity, appName: String) {
         viewModelScope.launch {
-            if (enteredPattern == currentSettings.patternSequence) {
+            if (verifySecret(enteredPattern, currentSettings.patternSequence)) {
                 failedAttemptsCount = 0
                 _authError.value = null
                 _unlockSuccess.value = true
@@ -320,65 +225,32 @@ class AppLockViewModel(application: Application) : AndroidViewModel(application)
                 failedAttemptsCount++
                 _authError.value = "نمط خاطئ. المحاولة $failedAttemptsCount من 3"
                 val shouldCapture = failedAttemptsCount >= 1
-                val details = if (failedAttemptsCount >= 3) {
-                    "3 محاولات نمط خاطئة متتالية. تم التقاط سيلفي المتطفل."
-                } else {
-                    "محاولة رسم نمط خاطئة - محاولة $failedAttemptsCount"
-                }
-
-                com.example.service.IntruderDetectionService.recordFailedAttempt(
-                    context = getApplication(),
-                    appName = appName,
-                    details = details,
-                    capturePhoto = shouldCapture
-                )
-
-                if (failedAttemptsCount >= 3) {
-                    failedAttemptsCount = 0
-                }
+                val details = if (failedAttemptsCount >= 3) "3 محاولات نمط خاطئة متتالية. تم التقاط سيلفي المتطفل." else "محاولة رسم نمط خاطئة - محاولة $failedAttemptsCount"
+                com.example.service.IntruderDetectionService.recordFailedAttempt(getApplication(), appName, details, shouldCapture)
+                if (failedAttemptsCount >= 3) failedAttemptsCount = 0
             }
         }
     }
 
+    private fun verifySecret(input: String, storedValue: String): Boolean {
+        if (input.isEmpty() || storedValue.isEmpty()) return false
+        // Supports both the new SHA-256 representation and legacy plaintext values.
+        val inputHash = sha256(input)
+        return MessageDigest.isEqual(inputHash.toByteArray(Charsets.UTF_8), storedValue.toByteArray(Charsets.UTF_8)) || input == storedValue
+    }
+
+    private fun sha256(value: String): String {
+        val digest = MessageDigest.getInstance("SHA-256").digest(value.toByteArray(Charsets.UTF_8))
+        return digest.joinToString("") { "%02x".format(it) }
+    }
+
     fun testCaptureIntruderSelfie(appName: String = "تجربة الأمان") {
-        viewModelScope.launch {
-            com.example.service.IntruderDetectionService.recordFailedAttempt(
-                context = getApplication(),
-                appName = appName,
-                details = "تجربة التقاط سيلفي المتطفل من المعرض 📸",
-                capturePhoto = true
-            )
-        }
+        viewModelScope.launch { com.example.service.IntruderDetectionService.recordFailedAttempt(getApplication(), appName, "تجربة التقاط سيلفي المتطفل من المعرض 📸", true) }
     }
-
-    fun deleteIntruderLog(id: Long) {
-        viewModelScope.launch {
-            repository.deleteLog(id)
-        }
-    }
-
-    fun updateSettings(newSettings: SecuritySettingsEntity) {
-        viewModelScope.launch {
-            repository.saveSettings(newSettings)
-        }
-    }
-
-    fun clearIntruderLogs() {
-        viewModelScope.launch {
-            repository.clearLogs()
-        }
-    }
-
+    fun deleteIntruderLog(id: Long) { viewModelScope.launch { repository.deleteLog(id) } }
+    fun updateSettings(newSettings: SecuritySettingsEntity) { viewModelScope.launch { repository.saveSettings(newSettings) } }
+    fun clearIntruderLogs() { viewModelScope.launch { repository.clearLogs() } }
     fun addNewApp(packageName: String, appName: String, category: String) {
-        viewModelScope.launch {
-            repository.insertApp(
-                ProtectedAppEntity(
-                    packageName = packageName,
-                    appName = appName,
-                    isLocked = true,
-                    category = category
-                )
-            )
-        }
+        viewModelScope.launch { repository.insertApp(ProtectedAppEntity(packageName, appName, true, category)) }
     }
 }
