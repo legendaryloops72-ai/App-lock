@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.sp
 import com.example.data.SecuritySettingsEntity
 import com.example.ui.viewmodel.AppLockViewModel
 import com.example.utils.BiometricAuthHelper
+import com.example.ui.components.AdBanner
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 
@@ -351,6 +352,14 @@ fun LockScreen(
                     )
                 }
             }
+
+            // Optional banner placed between authentication controls and Cancel.
+            // If loading fails, AdBanner renders nothing and uses no layout space.
+            AdBanner(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 8.dp)
+            )
 
             // Cancel / Dismiss button
             Button(

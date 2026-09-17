@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import com.example.service.AdManager
+import com.google.android.libraries.ads.mobile.sdk.banner.AdView
 
 @Composable
 fun AdBanner(modifier: Modifier = Modifier) {
@@ -22,15 +23,28 @@ fun AdBanner(modifier: Modifier = Modifier) {
     var bannerView by remember { mutableStateOf<View?>(null) }
 
     DisposableEffect(isInitialized) {
+        var disposed = false
+        var loadedView: View? = null
         if (isInitialized) {
             val activity = context as? Activity
             if (activity != null) {
                 AdManager.loadBannerAd(activity) { adView ->
-                    bannerView = adView
+                    if (disposed) {
+                        (adView as? AdView)?.destroy()
+                    } else {
+                        loadedView = adView
+                        bannerView = adView
+                    }
                 }
             }
         }
         onDispose {
+            disposed = true
+            loadedView?.let { view ->
+                (view.parent as? android.view.ViewGroup)?.removeView(view)
+                (view as? AdView)?.destroy()
+            }
+            loadedView = null
             bannerView = null
         }
     }
