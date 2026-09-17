@@ -83,6 +83,10 @@ class AppLockAccessibilityService : AccessibilityService() {
         if (event == null) return
         val packageName = event.packageName?.toString() ?: return
 
+        // LockScreen runs inside App Lock. Its own accessibility events must not
+        // clear the temporary grant for the protected app being opened.
+        if (packageName == applicationContext.packageName) return
+
         // The bypass is valid only while the authenticated app remains foreground.
         // Clear it before handling the new package, including Launcher/System UI and App Lock.
         if (unlockedPackage != null && packageName != unlockedPackage) {
@@ -91,8 +95,6 @@ class AppLockAccessibilityService : AccessibilityService() {
 
         // Do not intercept or lock our own app. Opening App Lock and granting permissions
         // must never require the protected-app PIN/Pattern.
-        if (packageName == applicationContext.packageName) return
-
         // The authenticated app remains usable for this foreground session only.
         if (packageName == unlockedPackage) return
 
