@@ -83,16 +83,18 @@ class AppLockAccessibilityService : AccessibilityService() {
         if (event == null) return
         val packageName = event.packageName?.toString() ?: return
 
-        // Do not intercept or lock our own app
-        if (packageName == applicationContext.packageName) return
-
-        // If this is the currently unlocked package, allow access
-        if (packageName == unlockedPackage) return
-
-        // If user navigates away to a different app/launcher, reset the unlocked package bypass
+        // The bypass is valid only while the authenticated app remains foreground.
+        // Clear it before handling the new package, including Launcher/System UI and App Lock.
         if (unlockedPackage != null && packageName != unlockedPackage) {
             unlockedPackage = null
         }
+
+        // Do not intercept or lock our own app. Opening App Lock and granting permissions
+        // must never require the protected-app PIN/Pattern.
+        if (packageName == applicationContext.packageName) return
+
+        // The authenticated app remains usable for this foreground session only.
+        if (packageName == unlockedPackage) return
 
         // Use in-memory snapshots for the hot accessibility-event path.
         // Room is observed above and only updates these snapshots when data changes.

@@ -74,7 +74,15 @@ class AppLockUsageService : Service() {
             )
             if (!stats.isNullOrEmpty()) {
                 val recentPackage = stats.maxByOrNull { it.lastTimeUsed }?.packageName
-                if (recentPackage != null && recentPackage != packageName && recentPackage != AppLockAccessibilityService.unlockedPackage) {
+                if (recentPackage != null && recentPackage != packageName) {
+                    // An unlock is a foreground-session grant, not a permanent bypass.
+                    // Clear it as soon as Home, System UI, or another app becomes current.
+                    if (recentPackage != AppLockAccessibilityService.unlockedPackage) {
+                        AppLockAccessibilityService.unlockedPackage = null
+                    } else {
+                        return
+                    }
+
                     val app = lockedApps.firstOrNull { it.packageName == recentPackage }
                     if (app != null) {
                         val intent = Intent(applicationContext, MainActivity::class.java).apply {
