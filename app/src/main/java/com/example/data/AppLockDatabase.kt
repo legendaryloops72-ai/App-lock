@@ -52,6 +52,10 @@ abstract class AppLockDatabase : RoomDatabase() {
             }
 
             suspend fun populateInitialData(dao: AppLockDao) {
+                // Older versions seeded Android Settings as locked. Remove that
+                // legacy protection so permission pages never request the app PIN.
+                dao.unprotectSystemSettings()
+
                 // Insert initial default security settings without predefined known PIN
                 dao.insertOrUpdateSettings(
                     SecuritySettingsEntity(
@@ -68,7 +72,8 @@ abstract class AppLockDatabase : RoomDatabase() {
                     ProtectedAppEntity("com.whatsapp", "WhatsApp", true, "Social"),
                     ProtectedAppEntity("com.instagram.android", "Instagram", true, "Social"),
                     ProtectedAppEntity("com.google.android.youtube", "YouTube", false, "Media"),
-                    ProtectedAppEntity("com.android.settings", "Settings", true, "System"),
+                    // System Settings must remain unprotected so permission setup
+                    // can open directly without the protected-app PIN/Pattern.
                     ProtectedAppEntity("com.google.android.gm", "Gmail", true, "Finance"),
                     ProtectedAppEntity("com.google.android.apps.photos", "Google Photos", true, "Media"),
                     ProtectedAppEntity("com.sec.android.gallery3d", "Gallery", true, "Media"),

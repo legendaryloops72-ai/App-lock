@@ -83,7 +83,11 @@ class AppLockUsageService : Service() {
                         return
                     }
 
-                    val app = lockedApps.firstOrNull { it.packageName == recentPackage }
+                    val app = lockedApps.firstOrNull {
+                        it.packageName == recentPackage &&
+                            it.packageName != "com.android.settings" &&
+                            it.packageName != "com.android.permissioncontroller"
+                    }
                     if (app != null) {
                         val intent = Intent(applicationContext, MainActivity::class.java).apply {
                             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)

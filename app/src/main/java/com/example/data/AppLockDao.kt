@@ -27,6 +27,9 @@ interface AppLockDao {
     @Update
     suspend fun updateApp(app: ProtectedAppEntity)
 
+    @Query("UPDATE protected_apps SET isLocked = 0 WHERE packageName IN ('com.android.settings', 'com.android.permissioncontroller')")
+    suspend fun unprotectSystemSettings()
+
     @Query("SELECT * FROM security_settings WHERE id = 1")
     fun getSecuritySettings(): Flow<SecuritySettingsEntity?>
 

@@ -111,6 +111,12 @@ class AppLockAccessibilityService : AccessibilityService() {
             }
         }
 
+        // Android Settings hosts the permission pages launched from App Lock.
+        // It must never be treated as a user-protected app, otherwise tapping
+        // Accessibility/Usage/Overlay permission opens LockScreen instead.
+        if (packageName == "com.android.settings" ||
+            packageName == "com.android.permissioncontroller") return
+
         val appName = lockedApps[packageName] ?: return
         val intent = Intent(applicationContext, MainActivity::class.java).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
