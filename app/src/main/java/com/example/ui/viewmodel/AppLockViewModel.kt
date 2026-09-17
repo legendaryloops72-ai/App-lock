@@ -129,13 +129,16 @@ class AppLockViewModel(application: Application) : AndroidViewModel(application)
     val unlockSuccess: StateFlow<Boolean> = _unlockSuccess.asStateFlow()
     private val _authError = MutableStateFlow<String?>(null)
     val authError: StateFlow<String?> = _authError.asStateFlow()
-    private val _isSelfLocked = MutableStateFlow(true)
+
+    // App Lock itself is intentionally never self-locked. PIN/Pattern remains
+    // available exclusively for unlocking protected third-party applications.
+    private val _isSelfLocked = MutableStateFlow(false)
     val isSelfLocked: StateFlow<Boolean> = _isSelfLocked.asStateFlow()
-    private var ignoreNextLock = false
-    fun ignoreNextSelfLock() { ignoreNextLock = true }
-    fun checkAndRequireSelfAuth(timeoutMs: Long, backgroundTime: Long) { if (ignoreNextLock) { ignoreNextLock = false; return }; if (backgroundTime > 0 && System.currentTimeMillis() - backgroundTime > timeoutMs) _isSelfLocked.value = true }
-    fun unlockSelf() { _isSelfLocked.value = false }
-    fun requireSelfAuth() { _isSelfLocked.value = true }
+    fun ignoreNextSelfLock() { /* Self Lock permanently disabled. */ }
+    fun checkAndRequireSelfAuth(timeoutMs: Long, backgroundTime: Long) { /* Self Lock permanently disabled. */ }
+    fun unlockSelf() { /* Self Lock permanently disabled. */ }
+    fun requireSelfAuth() { /* Self Lock permanently disabled. */ }
+
     fun setSearchQuery(query: String) { _searchQuery.value = query }
     fun setSelectedCategory(category: String) { _selectedCategory.value = category }
     fun toggleAppLock(app: ProtectedAppEntity) { viewModelScope.launch { repository.updateApp(app.copy(isLocked = !app.isLocked)) } }
