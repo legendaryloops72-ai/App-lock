@@ -29,6 +29,8 @@ class AppLockAccessibilityService : AccessibilityService() {
     companion object {
         var isServiceRunning = false
         var unlockedPackage: String? = null
+        @Volatile
+        var interceptedPackage: String? = null
     }
 
     override fun onCreate() {
@@ -87,6 +89,14 @@ class AppLockAccessibilityService : AccessibilityService() {
         // clear the temporary grant for the protected app being opened.
         if (packageName == applicationContext.packageName) return
 
+        if (interceptedPackage != null && packageName != interceptedPackage) {
+            interceptedPackage = null
+        }
+
+        // Accessibility can emit many events for one foreground transition.
+        // Do not relaunch MainActivity while this package is already awaiting auth.
+        if (packageName == interceptedPackage) return
+
         // The bypass is valid only while the authenticated app remains foreground.
         // Clear it before handling the new package, including Launcher/System UI and App Lock.
         if (unlockedPackage != null && packageName != unlockedPackage) {
@@ -125,6 +135,7 @@ class AppLockAccessibilityService : AccessibilityService() {
             putExtra("INTERCEPT_PACKAGE", packageName)
             putExtra("INTERCEPT_NAME", appName)
         }
+        interceptedPackage = packageName
         startActivity(intent)
     }
 

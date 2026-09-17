@@ -142,11 +142,17 @@ class AppLockViewModel(application: Application) : AndroidViewModel(application)
     fun setSearchQuery(query: String) { _searchQuery.value = query }
     fun setSelectedCategory(category: String) { _selectedCategory.value = category }
     fun toggleAppLock(app: ProtectedAppEntity) { viewModelScope.launch { repository.updateApp(app.copy(isLocked = !app.isLocked)) } }
-    fun triggerIntercept(packageName: String, appName: String) { _interceptedPackageName.value = packageName; _interceptedAppName.value = appName; _unlockSuccess.value = false; _authError.value = null }
+    fun triggerIntercept(packageName: String, appName: String) {
+        if (_interceptedPackageName.value == packageName) return
+        _interceptedPackageName.value = packageName
+        _interceptedAppName.value = appName
+        _unlockSuccess.value = false
+        _authError.value = null
+    }
     fun triggerAppLaunch(app: ProtectedAppEntity) { if (app.isLocked) triggerIntercept(app.packageName, app.appName) else dismissLockScreen() }
-    fun dismissLockScreen() { _interceptedPackageName.value = null; _interceptedAppName.value = null; _unlockSuccess.value = false; _authError.value = null; com.example.service.AppLockAccessibilityService.unlockedPackage = null }
+    fun dismissLockScreen() { _interceptedPackageName.value = null; _interceptedAppName.value = null; _unlockSuccess.value = false; _authError.value = null; com.example.service.AppLockAccessibilityService.unlockedPackage = null; com.example.service.AppLockAccessibilityService.interceptedPackage = null }
     fun onBiometricSuccess() { _unlockSuccess.value = true }
-    fun unlockSuccessful() { _interceptedPackageName.value?.let { pkg -> com.example.service.AppLockAccessibilityService.unlockedPackage = pkg }; _interceptedPackageName.value = null; _interceptedAppName.value = null; _unlockSuccess.value = false; _authError.value = null }
+    fun unlockSuccessful() { _interceptedPackageName.value?.let { pkg -> com.example.service.AppLockAccessibilityService.unlockedPackage = pkg }; com.example.service.AppLockAccessibilityService.interceptedPackage = null; _interceptedPackageName.value = null; _interceptedAppName.value = null; _unlockSuccess.value = false; _authError.value = null }
     fun setAuthError(error: String?) { _authError.value = error }
 
     private var failedAttemptsCount = 0

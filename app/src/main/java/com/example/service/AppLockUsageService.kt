@@ -88,12 +88,13 @@ class AppLockUsageService : Service() {
                             it.packageName != "com.android.settings" &&
                             it.packageName != "com.android.permissioncontroller"
                     }
-                    if (app != null) {
+                    if (app != null && recentPackage != AppLockAccessibilityService.interceptedPackage) {
                         val intent = Intent(applicationContext, MainActivity::class.java).apply {
                             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
                             putExtra("INTERCEPT_PACKAGE", app.packageName)
                             putExtra("INTERCEPT_NAME", app.appName)
                         }
+                        AppLockAccessibilityService.interceptedPackage = recentPackage
                         startActivity(intent)
                     }
                 }
