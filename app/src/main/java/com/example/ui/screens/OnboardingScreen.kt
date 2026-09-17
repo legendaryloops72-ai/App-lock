@@ -61,7 +61,7 @@ fun OnboardingScreen(
     val pagerState = rememberPagerState(pageCount = { pages.size + 1 })
     val coroutineScope = rememberCoroutineScope()
 
-    var customPin by remember { mutableStateOf("1234") }
+    var customPin by remember { mutableStateOf("") }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
@@ -245,13 +245,14 @@ fun OnboardingScreen(
                         } else {
                             viewModel.updateSettings(
                                 currentSettings.copy(
-                                    pin = if (customPin.isNotBlank()) customPin else "1234",
+                                    pin = customPin,
                                     isOnboardingCompleted = true
                                 )
                             )
                             onFinished()
                         }
                     },
+                    enabled = pagerState.currentPage < pages.size || customPin.length in 4..6,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),

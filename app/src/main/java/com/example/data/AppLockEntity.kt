@@ -15,9 +15,9 @@ data class ProtectedAppEntity(
 @Entity(tableName = "security_settings")
 data class SecuritySettingsEntity(
     @PrimaryKey val id: Int = 1,
-    val pin: String = "1234",
+    val pin: String = "",
     val lockType: String = "PIN", // "PIN" or "PATTERN"
-    val patternSequence: String = "0,1,2,4,6", // comma-separated pattern indices 0-8
+    val patternSequence: String = "", // comma-separated pattern indices 0-8
     val isBiometricEnabled: Boolean = true,
     val lockTimeout: String = "IMMEDIATELY", // "IMMEDIATELY", "1_MIN", "SCREEN_OFF"
     val fakeCrashEnabled: Boolean = false,

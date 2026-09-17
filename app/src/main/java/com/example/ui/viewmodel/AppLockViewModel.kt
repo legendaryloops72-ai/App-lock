@@ -35,11 +35,27 @@ class AppLockViewModel(application: Application) : AndroidViewModel(application)
             try {
                 val current = repository.getSecuritySettingsOnce()
                 if (current != null) {
+                    android.util.Log.d("AppLockViewModel", "Existing user settings found in DB. isOnboardingCompleted=${current.isOnboardingCompleted}")
                     val pin = current.pin.takeIf { it.isNotBlank() && !isSha256(it) }?.let(::sha256) ?: current.pin
                     val pattern = current.patternSequence.takeIf { it.isNotBlank() && !isSha256(it) }?.let(::sha256) ?: current.patternSequence
-                    if (pin != current.pin || pattern != current.patternSequence) repository.saveSettings(current.copy(pin = pin, patternSequence = pattern))
+                    if (pin != current.pin || pattern != current.patternSequence) {
+                        repository.saveSettings(current.copy(pin = pin, patternSequence = pattern))
+                    }
+                } else {
+                    android.util.Log.d("AppLockViewModel", "No settings found in DB on startup. Inserting initial default settings without preset PIN.")
+                    repository.saveSettings(
+                        SecuritySettingsEntity(
+                            id = 1,
+                            pin = "",
+                            lockType = "PIN",
+                            patternSequence = "",
+                            isOnboardingCompleted = false
+                        )
+                    )
                 }
-            } catch (_: Exception) { }
+            } catch (e: Exception) {
+                android.util.Log.e("AppLockViewModel", "Failed to migrate or initialize settings", e)
+            }
         }
     }
 
@@ -72,12 +88,14 @@ class AppLockViewModel(application: Application) : AndroidViewModel(application)
                     newAppsToInsert.add(ProtectedAppEntity(pkg, name, false, category))
                 }
                 if (newAppsToInsert.isNotEmpty()) repository.insertNewApps(newAppsToInsert)
-            } catch (_: Exception) { }
+            } catch (e: Exception) {
+                android.util.Log.e("AppLockViewModel", "Error loading installed apps", e)
+            }
         }
     }
 
     val apps: StateFlow<List<ProtectedAppEntity>> = repository.allApps.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-    val settings: StateFlow<SecuritySettingsEntity?> = repository.securitySettings.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+    val settings: StateFlow<SecuritySettingsEntity?> = repository.securitySettings.stateIn(viewModelScope, SharingStarted.Eagerly, null)
     val intruderLogs: StateFlow<List<IntruderLogEntity>> = repository.intruderLogs.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()

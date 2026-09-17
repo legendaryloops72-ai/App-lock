@@ -52,8 +52,11 @@ class MainActivity : androidx.fragment.app.FragmentActivity() {
     installSplashScreen()
     super.onCreate(savedInstanceState)
 
-    // Prevent screenshots, screen recording, and sensitive previews in Recent Apps.
-    window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+    // In Release builds, prevent screenshots, screen recording, and task switcher previews.
+    // In Debug/Preview builds, keep FLAG_SECURE disabled so the emulator display stream renders.
+    if (!BuildConfig.DEBUG) {
+      window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+    }
 
     enableEdgeToEdge()
     
@@ -62,11 +65,15 @@ class MainActivity : androidx.fragment.app.FragmentActivity() {
         android.util.Log.d("MainActivity", "MobileAds initialized with status: $status")
         com.example.service.AdManager.loadInterstitialAd(this)
       }
-    } catch (e: Exception) {}
+    } catch (e: Exception) {
+      android.util.Log.e("MainActivity", "AdManager initialization error", e)
+    }
     
     try {
       startService(android.content.Intent(this, com.example.service.AppLockUsageService::class.java))
-    } catch (e: Exception) {}
+    } catch (e: Exception) {
+      android.util.Log.e("MainActivity", "Failed to start AppLockUsageService", e)
+    }
 
     handleIntent(intent)
 
@@ -74,6 +81,10 @@ class MainActivity : androidx.fragment.app.FragmentActivity() {
       val settings by viewModel.settings.collectAsState()
       val darkTheme = settings?.isDarkMode ?: androidx.compose.foundation.isSystemInDarkTheme()
       val isSelfLocked by viewModel.isSelfLocked.collectAsState()
+
+      androidx.compose.runtime.SideEffect {
+        android.util.Log.d("MainActivity", "Recomposition: settings is ${if (settings == null) "NULL" else "LOADED(onboarding=${settings?.isOnboardingCompleted})"}")
+      }
 
       MyApplicationTheme(darkTheme = darkTheme) {
         val navController = rememberNavController()

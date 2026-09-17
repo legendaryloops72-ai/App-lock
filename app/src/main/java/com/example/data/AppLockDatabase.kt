@@ -23,12 +23,13 @@ abstract class AppLockDatabase : RoomDatabase() {
 
         fun getDatabase(context: Context): AppLockDatabase {
             return INSTANCE ?: synchronized(this) {
-                val instance = Room.databaseBuilder(
+                lateinit var instance: AppLockDatabase
+                instance = Room.databaseBuilder(
                     context.applicationContext,
                     AppLockDatabase::class.java,
                     "app_lock_database"
                 )
-                    .addCallback(AppLockDatabaseCallback())
+                    .addCallback(AppLockDatabaseCallback { instance })
                     .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance
@@ -36,19 +37,31 @@ abstract class AppLockDatabase : RoomDatabase() {
             }
         }
 
-        private class AppLockDatabaseCallback : Callback() {
+        private class AppLockDatabaseCallback(
+            private val databaseProvider: () -> AppLockDatabase
+        ) : Callback() {
             override fun onCreate(db: SupportSQLiteDatabase) {
                 super.onCreate(db)
-                INSTANCE?.let { database ->
-                    CoroutineScope(Dispatchers.IO).launch {
-                        populateInitialData(database.appLockDao())
+                CoroutineScope(Dispatchers.IO).launch {
+                    try {
+                        populateInitialData(databaseProvider().appLockDao())
+                    } catch (e: Exception) {
+                        android.util.Log.e("AppLockDatabase", "Failed to populate initial data on onCreate", e)
                     }
                 }
             }
 
             suspend fun populateInitialData(dao: AppLockDao) {
-                // Insert default security settings
-                dao.insertOrUpdateSettings(SecuritySettingsEntity(id = 1, pin = "1234", lockType = "PIN"))
+                // Insert initial default security settings without predefined known PIN
+                dao.insertOrUpdateSettings(
+                    SecuritySettingsEntity(
+                        id = 1,
+                        pin = "",
+                        lockType = "PIN",
+                        patternSequence = "",
+                        isOnboardingCompleted = false
+                    )
+                )
 
                 // Insert popular pre-populated apps
                 val initialApps = listOf(
