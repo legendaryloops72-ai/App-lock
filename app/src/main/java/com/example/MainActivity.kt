@@ -2,18 +2,14 @@ package com.example
 
 import android.os.Bundle
 import android.view.WindowManager
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.animation.*
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
@@ -25,21 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.ui.screens.CloudBackupScreen
-import com.example.ui.screens.DisguiseScreen
-import com.example.ui.screens.HomeScreen
-import com.example.ui.screens.IntruderLogsScreen
-import com.example.ui.screens.JunkCleanerScreen
-import com.example.ui.screens.LockScreen
-import com.example.ui.screens.OnboardingScreen
-import com.example.ui.screens.PermissionsScreen
-import com.example.ui.screens.SettingsScreen
-import com.example.ui.screens.SmartLaunchScreen
-import com.example.ui.screens.ThemeCustomizationScreen
-import com.example.ui.screens.TroubleshootingScreen
-import com.example.ui.screens.TutorialsScreen
-import com.example.ui.screens.VaultScreen
-import com.example.ui.screens.AppSelfLockScreen
+import com.example.ui.screens.*
 import com.example.ui.theme.MyApplicationTheme
 import com.example.ui.viewmodel.AppLockViewModel
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
@@ -53,13 +35,12 @@ class MainActivity : androidx.fragment.app.FragmentActivity() {
     super.onCreate(savedInstanceState)
 
     // In Release builds, prevent screenshots, screen recording, and task switcher previews.
-    // In Debug/Preview builds, keep FLAG_SECURE disabled so the emulator display stream renders.
     if (!BuildConfig.DEBUG) {
       window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
     }
 
     enableEdgeToEdge()
-    
+
     try {
       com.example.service.AdManager.initialize(this) { status ->
         android.util.Log.d("MainActivity", "MobileAds initialized with status: $status")
@@ -68,7 +49,7 @@ class MainActivity : androidx.fragment.app.FragmentActivity() {
     } catch (e: Exception) {
       android.util.Log.e("MainActivity", "AdManager initialization error", e)
     }
-    
+
     try {
       startService(android.content.Intent(this, com.example.service.AppLockUsageService::class.java))
     } catch (e: Exception) {
@@ -80,93 +61,55 @@ class MainActivity : androidx.fragment.app.FragmentActivity() {
     setContent {
       val settings by viewModel.settings.collectAsState()
       val darkTheme = settings?.isDarkMode ?: androidx.compose.foundation.isSystemInDarkTheme()
-      val isSelfLocked by viewModel.isSelfLocked.collectAsState()
-
-      androidx.compose.runtime.SideEffect {
-        android.util.Log.d("MainActivity", "Recomposition: settings is ${if (settings == null) "NULL" else "LOADED(onboarding=${settings?.isOnboardingCompleted})"}")
-      }
 
       MyApplicationTheme(darkTheme = darkTheme) {
         val navController = rememberNavController()
         val interceptedApp by viewModel.interceptedAppName.collectAsState()
-        
+
         val sharedPrefs = getSharedPreferences("AppPrefs", android.content.Context.MODE_PRIVATE)
-        val isOnboardingCompleted = sharedPrefs.getBoolean("onboarding_done", false)
-        val startDest = if (isOnboardingCompleted) "home" else "onboarding"
+        // App Lock itself opens directly. First-run setup is handled by the PIN dialog below.
+        val startDest = "home"
+        var showFirstRunPinSetup by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+
+        LaunchedEffect(settings) {
+          if (settings != null && settings!!.pin.isBlank() && settings!!.patternSequence.isBlank()) {
+            showFirstRunPinSetup = true
+          }
+        }
 
         val pendingNavigation by viewModel.pendingNavigation.collectAsState()
         LaunchedEffect(pendingNavigation) {
-            if (pendingNavigation != null) {
-                try {
-                    navController.navigate(pendingNavigation!!)
-                } catch (e: Exception) {}
-                viewModel.clearPendingNavigation()
-            }
-        }
-
-        LaunchedEffect(settings) {
-            if (settings?.isOnboardingCompleted == true) {
-                sharedPrefs.edit().putBoolean("onboarding_done", true).apply()
-                if (navController.currentBackStackEntry?.destination?.route == "onboarding") {
-                    navController.navigate("home") {
-                        popUpTo("onboarding") { inclusive = true }
-                    }
-                }
-            }
+          if (pendingNavigation != null) {
+            try { navController.navigate(pendingNavigation!!) } catch (_: Exception) { }
+            viewModel.clearPendingNavigation()
+          }
         }
 
         if (settings == null) {
           Box(
-            modifier = Modifier
-              .fillMaxSize()
-              .background(MaterialTheme.colorScheme.background),
+            modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
             contentAlignment = Alignment.Center
           ) {
-            androidx.compose.foundation.layout.Column(
-              horizontalAlignment = Alignment.CenterHorizontally
-            ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
               androidx.compose.material3.Icon(
                 imageVector = Icons.Filled.Lock,
                 contentDescription = "App Logo",
                 modifier = Modifier.size(80.dp),
                 tint = MaterialTheme.colorScheme.primary
               )
-              androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(24.dp))
-              androidx.compose.material3.Text(
-                text = "قفل التطبيقات",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
-              )
-              androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(8.dp))
-              androidx.compose.material3.Text(
-                text = "جاري تحميل الإعدادات...",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
-              )
-              androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(48.dp))
-              CircularProgressIndicator(
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(32.dp),
-                strokeWidth = 3.dp
-              )
+              Spacer(modifier = Modifier.height(24.dp))
+              Text("قفل التطبيقات", style = MaterialTheme.typography.headlineMedium)
+              Spacer(modifier = Modifier.height(8.dp))
+              Text("جاري تحميل الإعدادات...", style = MaterialTheme.typography.bodyMedium)
+              Spacer(modifier = Modifier.height(48.dp))
+              CircularProgressIndicator(modifier = Modifier.size(32.dp), strokeWidth = 3.dp)
             }
           }
         } else {
           Box(modifier = Modifier.fillMaxSize()) {
             NavHost(navController = navController, startDestination = startDest) {
-              composable("onboarding", enterTransition = { androidx.compose.animation.EnterTransition.None }, exitTransition = { androidx.compose.animation.ExitTransition.None }) {
-                OnboardingScreen(
-                  viewModel = viewModel,
-                  onFinished = {
-                    sharedPrefs.edit().putBoolean("onboarding_done", true).apply()
-                    navController.navigate("home") {
-                      popUpTo("onboarding") { inclusive = true }
-                    }
-                  }
-                )
-              }
-              composable("home", enterTransition = { androidx.compose.animation.EnterTransition.None }, exitTransition = { androidx.compose.animation.ExitTransition.None }) {
+              composable("onboarding") { OnboardingScreen(viewModel) { navController.navigate("home") } }
+              composable("home") {
                 HomeScreen(
                   viewModel = viewModel,
                   onNavigateToIntruders = { navController.navigate("intruders") },
@@ -179,102 +122,40 @@ class MainActivity : androidx.fragment.app.FragmentActivity() {
                   onNavigateToPermissions = { navController.navigate("permissions") }
                 )
               }
-              composable("intruders") {
-                IntruderLogsScreen(
-                  viewModel = viewModel,
-                  onBack = { navController.popBackStack() }
-                )
-              }
+              composable("intruders") { IntruderLogsScreen(viewModel) { navController.popBackStack() } }
               composable("settings") {
-                SettingsScreen(
-                  viewModel = viewModel,
-                  onBack = { navController.popBackStack() },
-                  onNavigateToPermissions = { navController.navigate("permissions") },
-                  onNavigateToTheme = { navController.navigate("theme") },
-                  onNavigateToCloudBackup = { navController.navigate("cloud_backup") },
-                  onNavigateToJunkCleaner = { navController.navigate("junk_cleaner") },
-                  onNavigateToDisguise = { navController.navigate("disguise") },
-                  onNavigateToSmartLaunch = { navController.navigate("smart_launch") },
-                  onNavigateToTutorials = { navController.navigate("tutorials") },
-                  onNavigateToVault = { navController.navigate("vault") },
-                  onNavigateToTroubleshooting = { navController.navigate("troubleshooting") }
-                )
+                SettingsScreen(viewModel, { navController.popBackStack() }, { navController.navigate("permissions") }, { navController.navigate("theme") }, { navController.navigate("cloud_backup") }, { navController.navigate("junk_cleaner") }, { navController.navigate("disguise") }, { navController.navigate("smart_launch") }, { navController.navigate("tutorials") }, { navController.navigate("vault") }, { navController.navigate("troubleshooting") })
               }
-              composable("permissions") {
-                PermissionsScreen(
-                  viewModel = viewModel,
-                  onBack = { navController.popBackStack() }
-                )
-              }
-              composable("theme") {
-                ThemeCustomizationScreen(
-                  viewModel = viewModel,
-                  onBack = { navController.popBackStack() }
-                )
-              }
-              composable("cloud_backup") {
-                CloudBackupScreen(
-                  viewModel = viewModel,
-                  onBack = { navController.popBackStack() }
-                )
-              }
-              composable("junk_cleaner") {
-                JunkCleanerScreen(
-                  viewModel = viewModel,
-                  onBack = { navController.popBackStack() }
-                )
-              }
-              composable("disguise") {
-                DisguiseScreen(
-                  viewModel = viewModel,
-                  onBack = { navController.popBackStack() }
-                )
-              }
-              composable("smart_launch") {
-                SmartLaunchScreen(
-                  viewModel = viewModel,
-                  onBack = { navController.popBackStack() }
-                )
-              }
-              composable("tutorials") {
-                TutorialsScreen(
-                  viewModel = viewModel,
-                  onBack = { navController.popBackStack() }
-                )
-              }
-              composable("vault") {
-                VaultScreen(
-                  viewModel = viewModel,
-                  onBack = { navController.popBackStack() }
-                )
-              }
-              composable("troubleshooting") {
-                TroubleshootingScreen(
-                  viewModel = viewModel,
-                  onBack = { navController.popBackStack() }
-                )
-              }
+              composable("permissions") { PermissionsScreen(viewModel) { navController.popBackStack() } }
+              composable("theme") { ThemeCustomizationScreen(viewModel) { navController.popBackStack() } }
+              composable("cloud_backup") { CloudBackupScreen(viewModel) { navController.popBackStack() } }
+              composable("junk_cleaner") { JunkCleanerScreen(viewModel) { navController.popBackStack() } }
+              composable("disguise") { DisguiseScreen(viewModel) { navController.popBackStack() } }
+              composable("smart_launch") { SmartLaunchScreen(viewModel) { navController.popBackStack() } }
+              composable("tutorials") { TutorialsScreen(viewModel) { navController.popBackStack() } }
+              composable("vault") { VaultScreen(viewModel) { navController.popBackStack() } }
+              composable("troubleshooting") { TroubleshootingScreen(viewModel) { navController.popBackStack() } }
             }
 
-            // If an app is intercepted (simulated launch), show Lock Screen overlay with smooth animation
             AnimatedVisibility(
-                visible = interceptedApp != null,
-                enter = fadeIn(animationSpec = tween(350)) + slideInVertically(initialOffsetY = { it / 3 }, animationSpec = tween(350)),
-                exit = fadeOut(animationSpec = tween(250)) + slideOutVertically(targetOffsetY = { it / 3 }, animationSpec = tween(250))
+              visible = interceptedApp != null,
+              enter = fadeIn(tween(350)) + slideInVertically(initialOffsetY = { it / 3 }, animationSpec = tween(350)),
+              exit = fadeOut(tween(250)) + slideOutVertically(targetOffsetY = { it / 3 }, animationSpec = tween(250))
             ) {
-                if (interceptedApp != null) {
-                    LockScreen(
-                        appName = interceptedApp!!,
-                        viewModel = viewModel
-                    )
-                }
+              if (interceptedApp != null) LockScreen(appName = interceptedApp!!, viewModel = viewModel)
             }
-            
-            // Self Auth overlay for AppLock itself
-            if (isSelfLocked && isOnboardingCompleted) {
-              AppSelfLockScreen(
+
+            // Self Lock remains permanently disabled.
+            val isSelfLocked by viewModel.isSelfLocked.collectAsState()
+            if (isSelfLocked) {
+              AppSelfLockScreen(settings = settings!!, onUnlock = { viewModel.unlockSelf() })
+            }
+
+            if (showFirstRunPinSetup && settings!!.pin.isBlank() && settings!!.patternSequence.isBlank()) {
+              SetSecurityPinDialog(
                 settings = settings!!,
-                onUnlock = { viewModel.unlockSelf() }
+                viewModel = viewModel,
+                onSaved = { showFirstRunPinSetup = false }
               )
             }
           }
@@ -290,19 +171,7 @@ class MainActivity : androidx.fragment.app.FragmentActivity() {
 
   override fun onResume() {
     super.onResume()
-    val settings = viewModel.settings.value
-    val sharedPrefs = getSharedPreferences("AppPrefs", android.content.Context.MODE_PRIVATE)
-    val isOnboardingCompleted = sharedPrefs.getBoolean("onboarding_done", false)
-    
-    if (settings != null && isOnboardingCompleted) {
-        val timeoutMs = when (settings.lockTimeout) {
-            "IMMEDIATELY" -> 0L
-            "1_MIN" -> 60_000L
-            "5_MIN" -> 300_000L
-            else -> 0L // Default to immediately if unknown
-        }
-        viewModel.checkAndRequireSelfAuth(timeoutMs, backgroundTime)
-    }
+    // App Lock itself is never self-locked.
     viewModel.checkAndNotifyUnseenIntruders(this)
   }
 
@@ -314,13 +183,9 @@ class MainActivity : androidx.fragment.app.FragmentActivity() {
 
   private fun handleIntent(intent: android.content.Intent?) {
     val navTo = intent?.getStringExtra("navigate_to")
-    if (navTo != null) {
-      viewModel.setPendingNavigation(navTo)
-    }
+    if (navTo != null) viewModel.setPendingNavigation(navTo)
     val pkg = intent?.getStringExtra("INTERCEPT_PACKAGE")
     val name = intent?.getStringExtra("INTERCEPT_NAME")
-    if (pkg != null && name != null) {
-      viewModel.triggerIntercept(pkg, name)
-    }
+    if (pkg != null && name != null) viewModel.triggerIntercept(pkg, name)
   }
 }
