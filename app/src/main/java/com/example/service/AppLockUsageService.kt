@@ -7,8 +7,10 @@ import android.app.Service
 import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.IBinder
+import android.view.inputmethod.InputMethodManager
 import androidx.core.app.NotificationCompat
 import com.example.data.AppLockDatabase
 import com.example.data.ProtectedAppEntity
@@ -76,9 +78,11 @@ class AppLockUsageService : Service() {
                 val recentPackage = stats.maxByOrNull { it.lastTimeUsed }?.packageName
                 if (recentPackage != null && recentPackage != packageName) {
                     // An unlock is a foreground-session grant, not a permanent bypass.
-                    // Clear it as soon as Home, System UI, or another app becomes current.
+                    // Transient transitions (Launcher, SystemUI, IME) must not clear it.
                     if (recentPackage != AppLockAccessibilityService.unlockedPackage) {
-                        AppLockAccessibilityService.unlockedPackage = null
+                        if (!isTransientPackage(recentPackage)) {
+                            AppLockAccessibilityService.unlockedPackage = null
+                        }
                     } else {
                         return
                     }
@@ -127,6 +131,53 @@ class AppLockUsageService : Service() {
             .setOngoing(true)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .build()
+    }
+
+    private var cachedLauncherPackages: Set<String> = emptySet()
+    private var lastLauncherCheckTime = 0L
+
+    private var cachedImePackages: Set<String> = emptySet()
+    private var lastImeCheckTime = 0L
+
+    private fun isLauncherPackage(packageName: String): Boolean {
+        val now = System.currentTimeMillis()
+        if (now - lastLauncherCheckTime > 10_000L || cachedLauncherPackages.isEmpty()) {
+            try {
+                val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
+                val homeList = mutableSetOf<String>()
+                packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)?.activityInfo?.packageName?.let {
+                    homeList.add(it)
+                }
+                val activities = packageManager.queryIntentActivities(intent, 0)
+                for (resolveInfo in activities) {
+                    resolveInfo.activityInfo?.packageName?.let { homeList.add(it) }
+                }
+                cachedLauncherPackages = homeList
+                lastLauncherCheckTime = now
+            } catch (_: Exception) {
+            }
+        }
+        return cachedLauncherPackages.contains(packageName)
+    }
+
+    private fun isImePackage(packageName: String): Boolean {
+        val now = System.currentTimeMillis()
+        if (now - lastImeCheckTime > 10_000L || cachedImePackages.isEmpty()) {
+            try {
+                val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
+                cachedImePackages = imm?.enabledInputMethodList?.mapNotNull { it.packageName }?.toSet() ?: emptySet()
+                lastImeCheckTime = now
+            } catch (_: Exception) {
+            }
+        }
+        return cachedImePackages.contains(packageName)
+    }
+
+    private fun isTransientPackage(packageName: String): Boolean {
+        if (packageName == "com.android.systemui") return true
+        if (isLauncherPackage(packageName)) return true
+        if (isImePackage(packageName)) return true
+        return false
     }
 
     override fun onDestroy() {

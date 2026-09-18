@@ -2,8 +2,10 @@ package com.example.service
 
 import android.accessibilityservice.AccessibilityService
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
+import android.view.inputmethod.InputMethodManager
 import com.example.data.AppLockDatabase
 import com.example.MainActivity
 import kotlinx.coroutines.CoroutineScope
@@ -97,9 +99,10 @@ class AppLockAccessibilityService : AccessibilityService() {
         // Do not relaunch MainActivity while this package is already awaiting auth.
         if (packageName == interceptedPackage) return
 
-        // The bypass is valid only while the authenticated app remains foreground.
-        // Clear it before handling the new package, including Launcher/System UI and App Lock.
-        if (unlockedPackage != null && packageName != unlockedPackage) {
+        // The bypass is valid while the authenticated app remains foreground.
+        // Transient window transitions (Launcher, SystemUI, IME keyboards) must not clear
+        // unlockedPackage, preventing re-lock loops when returning to the protected app.
+        if (unlockedPackage != null && packageName != unlockedPackage && !isTransientPackage(packageName)) {
             unlockedPackage = null
         }
 
@@ -207,6 +210,53 @@ class AppLockAccessibilityService : AccessibilityService() {
                 }
             }
         }
+        return false
+    }
+
+    private var cachedLauncherPackages: Set<String> = emptySet()
+    private var lastLauncherCheckTime = 0L
+
+    private var cachedImePackages: Set<String> = emptySet()
+    private var lastImeCheckTime = 0L
+
+    private fun isLauncherPackage(packageName: String): Boolean {
+        val now = System.currentTimeMillis()
+        if (now - lastLauncherCheckTime > 10_000L || cachedLauncherPackages.isEmpty()) {
+            try {
+                val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
+                val homeList = mutableSetOf<String>()
+                packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)?.activityInfo?.packageName?.let {
+                    homeList.add(it)
+                }
+                val activities = packageManager.queryIntentActivities(intent, 0)
+                for (resolveInfo in activities) {
+                    resolveInfo.activityInfo?.packageName?.let { homeList.add(it) }
+                }
+                cachedLauncherPackages = homeList
+                lastLauncherCheckTime = now
+            } catch (_: Exception) {
+            }
+        }
+        return cachedLauncherPackages.contains(packageName)
+    }
+
+    private fun isImePackage(packageName: String): Boolean {
+        val now = System.currentTimeMillis()
+        if (now - lastImeCheckTime > 10_000L || cachedImePackages.isEmpty()) {
+            try {
+                val imm = getSystemService(INPUT_METHOD_SERVICE) as? InputMethodManager
+                cachedImePackages = imm?.enabledInputMethodList?.mapNotNull { it.packageName }?.toSet() ?: emptySet()
+                lastImeCheckTime = now
+            } catch (_: Exception) {
+            }
+        }
+        return cachedImePackages.contains(packageName)
+    }
+
+    private fun isTransientPackage(packageName: String): Boolean {
+        if (packageName == "com.android.systemui") return true
+        if (isLauncherPackage(packageName)) return true
+        if (isImePackage(packageName)) return true
         return false
     }
 

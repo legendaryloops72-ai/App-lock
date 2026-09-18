@@ -268,6 +268,7 @@ fun LockScreen(
 
             // Authentication Input (PIN or Pattern)
             if (lockType == "PIN") {
+                val targetLength = settings?.pin?.length?.takeIf { it in 4..6 } ?: 4
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.padding(vertical = 16.dp)
@@ -277,7 +278,7 @@ fun LockScreen(
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                         modifier = Modifier.padding(bottom = 24.dp)
                     ) {
-                        for (i in 0..3) {
+                        for (i in 0 until targetLength) {
                             val filled = i < enteredPin.length
                             Box(
                                 modifier = Modifier
@@ -320,9 +321,9 @@ fun LockScreen(
                                             }
                                             "" -> {}
                                             else -> {
-                                                if (enteredPin.length < 4) {
+                                                if (enteredPin.length < targetLength) {
                                                     enteredPin += key
-                                                    if (enteredPin.length == 4) {
+                                                    if (enteredPin.length == targetLength) {
                                                         settings?.let { s ->
                                                             viewModel.verifyPin(enteredPin, s, appName)
                                                         }
