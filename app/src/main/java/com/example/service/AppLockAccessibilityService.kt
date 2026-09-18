@@ -254,6 +254,7 @@ class AppLockAccessibilityService : AccessibilityService() {
     }
 
     private fun isTransientPackage(packageName: String): Boolean {
+        if (packageName == "android") return true
         if (packageName == "com.android.systemui") return true
         if (isLauncherPackage(packageName)) return true
         if (isImePackage(packageName)) return true
