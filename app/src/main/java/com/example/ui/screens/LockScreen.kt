@@ -134,6 +134,7 @@ fun LockScreen(
             viewModel.unlockSuccessful()
             kotlinx.coroutines.delay(800)
             (context as? android.app.Activity)?.moveTaskToBack(true)
+            viewModel.clearInterceptedState()
         }
         Box(
             modifier = Modifier

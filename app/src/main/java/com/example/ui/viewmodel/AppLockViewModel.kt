@@ -152,7 +152,8 @@ class AppLockViewModel(application: Application) : AndroidViewModel(application)
     fun triggerAppLaunch(app: ProtectedAppEntity) { if (app.isLocked) triggerIntercept(app.packageName, app.appName) else dismissLockScreen() }
     fun dismissLockScreen() { _interceptedPackageName.value = null; _interceptedAppName.value = null; _unlockSuccess.value = false; _authError.value = null; com.example.service.AppLockAccessibilityService.unlockedPackage = null; com.example.service.AppLockAccessibilityService.interceptedPackage = null }
     fun onBiometricSuccess() { _unlockSuccess.value = true }
-    fun unlockSuccessful() { _interceptedPackageName.value?.let { pkg -> com.example.service.AppLockAccessibilityService.unlockedPackage = pkg }; com.example.service.AppLockAccessibilityService.interceptedPackage = null; _interceptedPackageName.value = null; _interceptedAppName.value = null; _unlockSuccess.value = false; _authError.value = null }
+    fun unlockSuccessful() { _interceptedPackageName.value?.let { pkg -> com.example.service.AppLockAccessibilityService.unlockedPackage = pkg }; com.example.service.AppLockAccessibilityService.interceptedPackage = null; _authError.value = null }
+    fun clearInterceptedState() { _interceptedPackageName.value = null; _interceptedAppName.value = null; _unlockSuccess.value = false; _authError.value = null }
     fun setAuthError(error: String?) { _authError.value = error }
 
     private var failedAttemptsCount = 0
