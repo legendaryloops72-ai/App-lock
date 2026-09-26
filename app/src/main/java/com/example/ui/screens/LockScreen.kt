@@ -131,8 +131,8 @@ fun LockScreen(
 
     if (showSuccessCelebration) {
         androidx.compose.runtime.LaunchedEffect(Unit) {
-            kotlinx.coroutines.delay(800)
             viewModel.unlockSuccessful()
+            kotlinx.coroutines.delay(800)
             (context as? android.app.Activity)?.moveTaskToBack(true)
         }
         Box(

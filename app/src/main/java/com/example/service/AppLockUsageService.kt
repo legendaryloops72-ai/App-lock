@@ -80,7 +80,7 @@ class AppLockUsageService : Service() {
                     // An unlock is a foreground-session grant, not a permanent bypass.
                     // Transient transitions (Launcher, SystemUI, IME) must not clear it.
                     if (recentPackage != AppLockAccessibilityService.unlockedPackage) {
-                        if (!isTransientPackage(recentPackage)) {
+                        if (!isTransientPackage(recentPackage) && !AppLockAccessibilityService.isWithinGracePeriod()) {
                             AppLockAccessibilityService.unlockedPackage = null
                         }
                     } else {

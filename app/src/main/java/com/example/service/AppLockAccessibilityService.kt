@@ -31,6 +31,19 @@ class AppLockAccessibilityService : AccessibilityService() {
     companion object {
         var isServiceRunning = false
         var unlockedPackage: String? = null
+            set(value) {
+                field = value
+                if (value != null) {
+                    lastUnlockTime = System.currentTimeMillis()
+                }
+            }
+        var lastUnlockTime: Long = 0L
+        const val UNLOCK_GRACE_PERIOD_MS = 4000L
+
+        fun isWithinGracePeriod(): Boolean {
+            return (System.currentTimeMillis() - lastUnlockTime) < UNLOCK_GRACE_PERIOD_MS
+        }
+
         @Volatile
         var interceptedPackage: String? = null
     }
@@ -103,7 +116,9 @@ class AppLockAccessibilityService : AccessibilityService() {
         // Transient window transitions (Launcher, SystemUI, IME keyboards) must not clear
         // unlockedPackage, preventing re-lock loops when returning to the protected app.
         if (unlockedPackage != null && packageName != unlockedPackage && !isTransientPackage(packageName)) {
-            unlockedPackage = null
+            if (!isWithinGracePeriod()) {
+                unlockedPackage = null
+            }
         }
 
         // Do not intercept or lock our own app. Opening App Lock and granting permissions
@@ -256,6 +271,10 @@ class AppLockAccessibilityService : AccessibilityService() {
     private fun isTransientPackage(packageName: String): Boolean {
         if (packageName == "android") return true
         if (packageName == "com.android.systemui") return true
+        if (packageName == "com.android.systemui.recents") return true
+        if (packageName == "com.miui.home") return true
+        if (packageName == "com.sec.android.app.launcher") return true
+        if (packageName == "com.google.android.apps.nexuslauncher") return true
         if (isLauncherPackage(packageName)) return true
         if (isImePackage(packageName)) return true
         return false
