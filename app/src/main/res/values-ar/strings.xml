@@ -1,14 +1,73 @@
 <resources>
     <string name="app_name">قفل التطبيقات</string>
-    <string name="language_title">اللغة (Language)</string>
+    <string name="language_title">اللغة</string>
     <string name="language_desc">اختر لغة التطبيق (العربية، الإنجليزية، الإسبانية)</string>
+    <string name="language_choose">اختر لغة التطبيق</string>
     <string name="lang_ar">العربية (Arabic)</string>
     <string name="lang_en">English (الإنجليزية)</string>
     <string name="lang_es">Español (الإسبانية)</string>
+    <string name="dialog_close">إغلاق</string>
 
     <!-- Accessibility Service Prominent Disclosure & Consent -->
     <string name="accessibility_disclosure_title">استخدام خدمة إمكانية الوصول</string>
     <string name="accessibility_disclosure_desc">يستخدم App Lock خدمة إمكانية الوصول للوصول فقط إلى اسم حزمة التطبيق النشط في الواجهة لاكتشاف فتح التطبيقات التي اخترتها للحماية وعرض شاشة القفل. لا يقرأ App Lock محتوى الشاشة أو النصوص الشخصية أو مدخلات لوحة المفاتيح. ولا تُستخدم الخدمة لمنع إلغاء التثبيت أو إيقاف التطبيقات. يُستخدم اسم الحزمة مؤقتًا على الجهاز فقط، ولا يتم حفظه بشكل دائم أو بيعه أو مشاركته مع جهات خارجية.</string>
     <string name="accessibility_disclosure_agree">موافقة ومتابعة</string>
     <string name="accessibility_disclosure_decline">ليس الآن</string>
+
+    <!-- Onboarding Screen -->
+    <string name="onboarding_skip">تخطي</string>
+    <string name="onboarding_title_1">حماية متقدمة للتطبيقات</string>
+    <string name="onboarding_desc_1">احمِ محادثاتك الخاصة وصورك وتطبيقاتك المالية ووسائل التواصل الاجتماعي بقفل PIN ونمط فائق الأمان.</string>
+    <string name="onboarding_title_2">سيلفي وسجل المتطفلين</string>
+    <string name="onboarding_desc_2">اكتشف المتطفلين تلقائيًا! إذا أدخل أي شخص رمز PIN أو نمطًا خاطئًا، يسجل قفل التطبيقات تقريرًا بالمتطفل.</string>
+    <string name="onboarding_title_3">فتح سريع بالبصمة</string>
+    <string name="onboarding_desc_3">افتح تطبيقاتك المحمية على الفور باستخدام بصمة الإصبع أو الوجه بكل سلاسة وسرعة.</string>
+    <string name="onboarding_set_pin_title">تعيين رمز PIN الرئيسي</string>
+    <string name="onboarding_set_pin_desc">اختر رمز PIN مكونًا من 4 إلى 6 أرقام لتأمين تطبيقاتك المحمية وإعداداتك.</string>
+    <string name="onboarding_pin_label">رمز PIN من 4-6 أرقام</string>
+    <string name="onboarding_btn_next">التالي</string>
+    <string name="onboarding_btn_get_started">ابدأ الآن</string>
+    <string name="onboarding_agree_prefix">بالمتابعة، فإنك توافق على </string>
+    <string name="onboarding_privacy_policy">سياسة الخصوصية</string>
+
+    <!-- Settings Screen -->
+    <string name="settings_title">الإعدادات</string>
+    <string name="settings_permissions_title">مركز الأذونات والصلاحيات</string>
+    <string name="settings_permissions_desc">منح أذونات القفل والوصول والتشغيل</string>
+    <string name="settings_troubleshooting_title">تعذّر قفل التطبيقات</string>
+    <string name="settings_troubleshooting_desc">تم حل مشكلة أكثر من 93% من المستخدمين</string>
+    <string name="settings_tutorials_title">التعليمات</string>
+    <string name="settings_security_title">كلمة المرور والأمان</string>
+    <string name="settings_biometric_title">فتح بصمة الإصبع</string>
+    <string name="settings_badge_hot">شائع</string>
+    <string name="settings_uninstall_protection_title">منع إلغاء التثبيت (الدرع الذكي)</string>
+    <string name="settings_badge_secure">آمن</string>
+    <string name="settings_uninstall_protection_desc">حظر الدخول لصفحة إعدادات التطبيق لقطع محاولات الحذف أو الإيقاف الإجباري.</string>
+    <string name="settings_timeout_title">قفل تلقائي بعد مغادرة التطبيق</string>
+    <string name="settings_timeout_immediately">فوري</string>
+    <string name="settings_timeout_1_minute">بعد دقيقة</string>
+    <string name="settings_timeout_5_minutes">بعد 5 دقائق</string>
+    <string name="settings_change_pin_title">تغيير رمز المرور</string>
+    <string name="settings_lock_type_title">نوع كلمة المرور</string>
+    <string name="settings_lock_type_pin">الرمز (PIN)</string>
+    <string name="settings_lock_type_pattern">النمط (Pattern)</string>
+    <string name="settings_recovery_method_title">طريقة استعادة كلمة المرور</string>
+    <string name="settings_smart_lock_title">القفل الذكي</string>
+    <string name="settings_smart_lock_desc">قفل الشاشة • الأمان الذكي المتقدم</string>
+    <string name="settings_advanced_title">متقدم</string>
+    <string name="settings_advanced_desc">قفل التطبيق • الإشعارات • بدء التشغيل</string>
+    <string name="settings_notes_title">الملاحظات</string>
+    <string name="settings_notes_desc">ميزة جديدة • الملاحظات والخزانة</string>
+    <string name="settings_other_title">أخرى</string>
+    <string name="settings_other_desc">اللغة • مشاركة • الثيمات</string>
+    <string name="settings_privacy_title">سياسة الخصوصية</string>
+    <string name="settings_privacy_desc">عرض سياسة الخصوصية وحماية البيانات الخاصة بالتطبيق</string>
+    <string name="settings_ad_inspector_title">فحص الإعلانات (Ad Inspector)</string>
+    <string name="settings_ad_inspector_desc">اختبار وتتبع مصادر وحالة إعلانات Next-Gen SDK</string>
+    <string name="settings_new_pin_label">رمز PIN الجديد (4 أرقام)</string>
+    <string name="settings_btn_save">حفظ</string>
+    <string name="settings_btn_cancel">إلغاء</string>
+    <string name="settings_smart_lock_dialog_title">إعدادات القفل الذكي والأمان</string>
+    <string name="settings_smart_lock_dialog_desc">يسمح القفل الذكي بالحفاظ على الجهاز مفتوحاً في الأماكن الموثوقة أو عند الاتصال بأجهزة موثوقة، بالإضافة إلى التحكم في إعدادات قفل النظام.</string>
+    <string name="settings_system_security">إعدادات الأمان في النظام</string>
 </resources>

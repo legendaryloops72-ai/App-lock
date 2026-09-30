@@ -1,14 +1,73 @@
 <resources>
     <string name="app_name">App Lock</string>
-    <string name="language_title">Language / اللغة / Idioma</string>
+    <string name="language_title">Language</string>
     <string name="language_desc">Choose app language (English, Arabic, Spanish)</string>
+    <string name="language_choose">Choose Language</string>
     <string name="lang_ar">العربية (Arabic)</string>
     <string name="lang_en">English (English)</string>
     <string name="lang_es">Español (Spanish)</string>
+    <string name="dialog_close">Close</string>
 
     <!-- Accessibility Service Prominent Disclosure & Consent -->
     <string name="accessibility_disclosure_title">Use of Accessibility Service</string>
     <string name="accessibility_disclosure_desc">App Lock uses the Accessibility Service solely to access the active foreground app\'s package name to detect when your protected apps are opened and display the lock screen. App Lock does not read screen content, personal text, or keystrokes. The service is not used to prevent uninstallation or force stopping. The package name is used only temporarily on the device and is not permanently stored, sold, or shared with third parties.</string>
     <string name="accessibility_disclosure_agree">Agree &amp; Continue</string>
     <string name="accessibility_disclosure_decline">Not Now</string>
+
+    <!-- Onboarding Screen -->
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_title_1">Advanced App Protection</string>
+    <string name="onboarding_desc_1">Secure your private chats, photos, financial apps, and social media with military-grade PIN and Pattern locking.</string>
+    <string name="onboarding_title_2">Intruder Selfie &amp; Logs</string>
+    <string name="onboarding_desc_2">Automatically catch snoopers! If anyone enters the wrong PIN or pattern, App Lock records an intruder log.</string>
+    <string name="onboarding_title_3">Biometric Quick Unlock</string>
+    <string name="onboarding_desc_3">Unlock your protected applications instantly using your fingerprint or Face ID with zero friction.</string>
+    <string name="onboarding_set_pin_title">Set Your Master PIN</string>
+    <string name="onboarding_set_pin_desc">Choose a 4-6 digit PIN to secure your locked apps and settings.</string>
+    <string name="onboarding_pin_label">4-6 Digit PIN</string>
+    <string name="onboarding_btn_next">Next</string>
+    <string name="onboarding_btn_get_started">Get Started</string>
+    <string name="onboarding_agree_prefix">By continuing, you agree to our </string>
+    <string name="onboarding_privacy_policy">Privacy Policy</string>
+
+    <!-- Settings Screen -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_permissions_title">Permissions Center</string>
+    <string name="settings_permissions_desc">Grant lock, usage &amp; auto-start permissions</string>
+    <string name="settings_troubleshooting_title">App Lock Not Working?</string>
+    <string name="settings_troubleshooting_desc">Fixed issues for over 93% of users</string>
+    <string name="settings_tutorials_title">Tutorials &amp; Guide</string>
+    <string name="settings_security_title">Password &amp; Security</string>
+    <string name="settings_biometric_title">Fingerprint Unlock</string>
+    <string name="settings_badge_hot">Hot</string>
+    <string name="settings_uninstall_protection_title">Uninstall Protection (Smart Shield)</string>
+    <string name="settings_badge_secure">Safe</string>
+    <string name="settings_uninstall_protection_desc">Block access to system settings to prevent app deletion or force stopping.</string>
+    <string name="settings_timeout_title">Auto-lock after exiting app</string>
+    <string name="settings_timeout_immediately">Immediately</string>
+    <string name="settings_timeout_1_minute">After 1 minute</string>
+    <string name="settings_timeout_5_minutes">After 5 minutes</string>
+    <string name="settings_change_pin_title">Change Passcode</string>
+    <string name="settings_lock_type_title">Lock Type</string>
+    <string name="settings_lock_type_pin">PIN Code</string>
+    <string name="settings_lock_type_pattern">Pattern</string>
+    <string name="settings_recovery_method_title">Password Recovery Method</string>
+    <string name="settings_smart_lock_title">Smart Lock</string>
+    <string name="settings_smart_lock_desc">Screen lock • Advanced smart security</string>
+    <string name="settings_advanced_title">Advanced</string>
+    <string name="settings_advanced_desc">App lock • Notifications • Auto-start</string>
+    <string name="settings_notes_title">Notes &amp; Vault</string>
+    <string name="settings_notes_desc">New feature • Notes and media vault</string>
+    <string name="settings_other_title">Other</string>
+    <string name="settings_other_desc">Language • Share • Themes</string>
+    <string name="settings_privacy_title">Privacy Policy</string>
+    <string name="settings_privacy_desc">View application privacy policy and data safety</string>
+    <string name="settings_ad_inspector_title">Ad Inspector</string>
+    <string name="settings_ad_inspector_desc">Test and inspect Next-Gen SDK ad sources</string>
+    <string name="settings_new_pin_label">New PIN (4 digits)</string>
+    <string name="settings_btn_save">Save</string>
+    <string name="settings_btn_cancel">Cancel</string>
+    <string name="settings_smart_lock_dialog_title">Smart Lock &amp; Security Settings</string>
+    <string name="settings_smart_lock_dialog_desc">Smart Lock keeps your device unlocked in trusted places or when connected to trusted devices, alongside system security settings.</string>
+    <string name="settings_system_security">System Security Settings</string>
 </resources>

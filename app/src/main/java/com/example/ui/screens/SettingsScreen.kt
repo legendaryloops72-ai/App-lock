@@ -12,9 +12,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.data.SecuritySettingsEntity
 import com.example.ui.viewmodel.AppLockViewModel
 
@@ -45,7 +47,7 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("الإعدادات", fontWeight = FontWeight.Bold, color = Color.White) },
+                title = { Text(stringResource(id = R.string.settings_title), fontWeight = FontWeight.Bold, color = Color.White) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
@@ -80,8 +82,8 @@ fun SettingsScreen(
                         Icon(Icons.Default.Security, contentDescription = null, tint = Color(0xFF10B981))
                         Spacer(modifier = Modifier.width(16.dp))
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(text = "مركز الأذونات والصلاحيات", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
-                            Text(text = "منح أذونات القفل والوصول والتشغيل", style = MaterialTheme.typography.bodySmall, color = Color(0xFF10B981))
+                            Text(text = stringResource(id = R.string.settings_permissions_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
+                            Text(text = stringResource(id = R.string.settings_permissions_desc), style = MaterialTheme.typography.bodySmall, color = Color(0xFF10B981))
                         }
                         Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color.Gray)
                     }
@@ -105,8 +107,8 @@ fun SettingsScreen(
                         Icon(Icons.Default.Build, contentDescription = null, tint = Color(0xFFF97316))
                         Spacer(modifier = Modifier.width(16.dp))
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(text = "تعذّر قفل التطبيقات", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
-                            Text(text = "تم حل مشكلة أكثر من 93% من المستخدمين", style = MaterialTheme.typography.bodySmall, color = Color(0xFF3B82F6))
+                            Text(text = stringResource(id = R.string.settings_troubleshooting_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
+                            Text(text = stringResource(id = R.string.settings_troubleshooting_desc), style = MaterialTheme.typography.bodySmall, color = Color(0xFF3B82F6))
                         }
                         Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color.Gray)
                     }
@@ -130,7 +132,7 @@ fun SettingsScreen(
                         Icon(Icons.Default.HelpOutline, contentDescription = null, tint = Color(0xFFF97316))
                         Spacer(modifier = Modifier.width(16.dp))
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(text = "التعليمات", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
+                            Text(text = stringResource(id = R.string.settings_tutorials_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
                         }
                         Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color.Gray)
                     }
@@ -145,7 +147,7 @@ fun SettingsScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text(text = "كلمة المرور والأمان", fontWeight = FontWeight.Bold, color = Color.Gray, fontSize = 14.sp)
+                        Text(text = stringResource(id = R.string.settings_security_title), fontWeight = FontWeight.Bold, color = Color.Gray, fontSize = 14.sp)
                         Spacer(modifier = Modifier.height(12.dp))
 
                         // Fingerprint toggle
@@ -159,13 +161,13 @@ fun SettingsScreen(
                             Spacer(modifier = Modifier.width(16.dp))
                             Column(modifier = Modifier.weight(1f)) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(text = "فتح بصمة الإصبع", fontWeight = FontWeight.Bold, color = Color.White)
+                                    Text(text = stringResource(id = R.string.settings_biometric_title), fontWeight = FontWeight.Bold, color = Color.White)
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Surface(
                                         color = Color(0xFFEF4444),
                                         shape = RoundedCornerShape(4.dp)
                                     ) {
-                                        Text(text = "Hot", color = Color.White, fontSize = 10.sp, modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp), fontWeight = FontWeight.Bold)
+                                        Text(text = stringResource(id = R.string.settings_badge_hot), color = Color.White, fontSize = 10.sp, modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp), fontWeight = FontWeight.Bold)
                                     }
                                 }
                             }
@@ -190,17 +192,17 @@ fun SettingsScreen(
                             Spacer(modifier = Modifier.width(16.dp))
                             Column(modifier = Modifier.weight(1f)) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(text = "منع إلغاء التثبيت (الدرع الذكي)", fontWeight = FontWeight.Bold, color = Color.White)
+                                    Text(text = stringResource(id = R.string.settings_uninstall_protection_title), fontWeight = FontWeight.Bold, color = Color.White)
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Surface(
                                         color = Color(0xFF10B981),
                                         shape = RoundedCornerShape(4.dp)
                                     ) {
-                                        Text(text = "آمن", color = Color.White, fontSize = 10.sp, modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp), fontWeight = FontWeight.Bold)
+                                        Text(text = stringResource(id = R.string.settings_badge_secure), color = Color.White, fontSize = 10.sp, modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp), fontWeight = FontWeight.Bold)
                                     }
                                 }
                                 Text(
-                                    text = "حظر الدخول لصفحة إعدادات التطبيق لقطع محاولات الحذف أو الإيقاف الإجباري.",
+                                    text = stringResource(id = R.string.settings_uninstall_protection_desc),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = Color.Gray
                                 )
@@ -229,12 +231,12 @@ fun SettingsScreen(
                             Icon(Icons.Default.Timer, contentDescription = null, tint = Color(0xFFFACC15))
                             Spacer(modifier = Modifier.width(16.dp))
                             Column(modifier = Modifier.weight(1f)) {
-                                Text(text = "قفل تلقائي بعد مغادرة التطبيق", fontWeight = FontWeight.Bold, color = Color.White)
+                                Text(text = stringResource(id = R.string.settings_timeout_title), fontWeight = FontWeight.Bold, color = Color.White)
                                 Text(text = when (currentSettings.lockTimeout) {
-                                    "IMMEDIATELY" -> "فوري"
-                                    "1_MIN" -> "بعد دقيقة"
-                                    "5_MIN" -> "بعد 5 دقائق"
-                                    else -> "فوري"
+                                    "IMMEDIATELY" -> stringResource(id = R.string.settings_timeout_immediately)
+                                    "1_MIN" -> stringResource(id = R.string.settings_timeout_1_minute)
+                                    "5_MIN" -> stringResource(id = R.string.settings_timeout_5_minutes)
+                                    else -> stringResource(id = R.string.settings_timeout_immediately)
                                 }, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                             }
                         }
@@ -247,7 +249,7 @@ fun SettingsScreen(
                         ) {
                             Icon(Icons.Default.VpnKey, contentDescription = null, tint = Color(0xFFFACC15))
                             Spacer(modifier = Modifier.width(16.dp))
-                            Text(text = "تغيير رمز المرور", fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.weight(1f))
+                            Text(text = stringResource(id = R.string.settings_change_pin_title), fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.weight(1f))
                         }
 
                         Divider(color = Color(0xFF2D3242))
@@ -261,12 +263,12 @@ fun SettingsScreen(
                         ) {
                             Icon(Icons.Default.Lock, contentDescription = null, tint = Color(0xFFFACC15))
                             Spacer(modifier = Modifier.width(16.dp))
-                            Text(text = "نوع كلمة المرور", fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.weight(1f))
+                            Text(text = stringResource(id = R.string.settings_lock_type_title), fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.weight(1f))
                             TextButton(onClick = {
                                 val newType = if (currentSettings.lockType == "PIN") "PATTERN" else "PIN"
                                 viewModel.updateSettings(currentSettings.copy(lockType = newType))
                             }) {
-                                Text(if (currentSettings.lockType == "PIN") "الرمز (PIN)" else "النمط (Pattern)", color = Color(0xFF3B82F6))
+                                Text(if (currentSettings.lockType == "PIN") stringResource(id = R.string.settings_lock_type_pin) else stringResource(id = R.string.settings_lock_type_pattern), color = Color(0xFF3B82F6))
                             }
                         }
 
@@ -281,7 +283,7 @@ fun SettingsScreen(
                         ) {
                             Icon(Icons.Default.Security, contentDescription = null, tint = Color(0xFFFACC15))
                             Spacer(modifier = Modifier.width(16.dp))
-                            Text(text = "طريقة استعادة كلمة المرور", fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.weight(1f))
+                            Text(text = stringResource(id = R.string.settings_recovery_method_title), fontWeight = FontWeight.Bold, color = Color.White, modifier = Modifier.weight(1f))
                             Icon(Icons.Default.Warning, contentDescription = null, tint = Color(0xFFEF4444), modifier = Modifier.size(20.dp))
                         }
                     }
@@ -303,8 +305,8 @@ fun SettingsScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(text = "القفل الذكي", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
-                            Text(text = "قفل الشاشة • الأمان الذكي المتقدم", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                            Text(text = stringResource(id = R.string.settings_smart_lock_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
+                            Text(text = stringResource(id = R.string.settings_smart_lock_desc), style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                         }
                         Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color.Gray)
                     }
@@ -328,8 +330,8 @@ fun SettingsScreen(
                         Icon(Icons.Default.Language, contentDescription = null, tint = Color(0xFF38BDF8))
                         Spacer(modifier = Modifier.width(16.dp))
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(text = "اللغة / Language / Idioma", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
-                            Text(text = "العربية • English • Español", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                            Text(text = stringResource(id = R.string.language_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
+                            Text(text = stringResource(id = R.string.language_desc), style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                         }
                         Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color.Gray)
                     }
@@ -351,8 +353,8 @@ fun SettingsScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(text = "متقدم", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
-                            Text(text = "قفل التطبيق • الإشعارات • بدء التشغيل", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                            Text(text = stringResource(id = R.string.settings_advanced_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
+                            Text(text = stringResource(id = R.string.settings_advanced_desc), style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                         }
                         Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color.Gray)
                     }
@@ -374,8 +376,8 @@ fun SettingsScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(text = "الملاحظات", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
-                            Text(text = "ميزة جديدة • الملاحظات والخزانة", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                            Text(text = stringResource(id = R.string.settings_notes_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
+                            Text(text = stringResource(id = R.string.settings_notes_desc), style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                         }
                         Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color.Gray)
                     }
@@ -397,8 +399,8 @@ fun SettingsScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(text = "أخرى", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
-                            Text(text = "اللغة • مشاركة • الثيمات", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                            Text(text = stringResource(id = R.string.settings_other_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
+                            Text(text = stringResource(id = R.string.settings_other_desc), style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                         }
                         Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color.Gray)
                     }
@@ -434,8 +436,8 @@ fun SettingsScreen(
                         Icon(Icons.Default.Info, contentDescription = null, tint = Color(0xFF10B981))
                         Spacer(modifier = Modifier.width(16.dp))
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(text = "سياسة الخصوصية", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
-                            Text(text = "عرض سياسة الخصوصية وحماية البيانات الخاصة بالتطبيق", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                            Text(text = stringResource(id = R.string.settings_privacy_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
+                            Text(text = stringResource(id = R.string.settings_privacy_desc), style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                         }
                         Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color.Gray)
                     }
@@ -469,8 +471,8 @@ fun SettingsScreen(
                         Icon(Icons.Default.BugReport, contentDescription = null, tint = Color(0xFF3B82F6))
                         Spacer(modifier = Modifier.width(16.dp))
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(text = "فحص الإعلانات (Ad Inspector)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
-                            Text(text = "اختبار وتتبع مصادر وحالة إعلانات Next-Gen SDK", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                            Text(text = stringResource(id = R.string.settings_ad_inspector_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
+                            Text(text = stringResource(id = R.string.settings_ad_inspector_desc), style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                         }
                         Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color.Gray)
                     }
@@ -495,12 +497,12 @@ fun SettingsScreen(
         var newPin by remember { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { showChangePinDialog = false },
-            title = { Text("تغيير رمز المرور") },
+            title = { Text(stringResource(id = R.string.settings_change_pin_title)) },
             text = {
                 OutlinedTextField(
                     value = newPin,
                     onValueChange = { newPin = it },
-                    label = { Text("رمز PIN الجديد (4 أرقام)") },
+                    label = { Text(stringResource(id = R.string.settings_new_pin_label)) },
                     singleLine = true
                 )
             },
@@ -511,12 +513,12 @@ fun SettingsScreen(
                         showChangePinDialog = false
                     }
                 }) {
-                    Text("حفظ")
+                    Text(stringResource(id = R.string.settings_btn_save))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showChangePinDialog = false }) {
-                    Text("إلغاء")
+                    Text(stringResource(id = R.string.settings_btn_cancel))
                 }
             }
         )
@@ -525,10 +527,10 @@ fun SettingsScreen(
     if (showSmartLockDialog) {
         AlertDialog(
             onDismissRequest = { showSmartLockDialog = false },
-            title = { Text("إعدادات القفل الذكي والأمان") },
+            title = { Text(stringResource(id = R.string.settings_smart_lock_dialog_title)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("يسمح القفل الذكي بالحفاظ على الجهاز مفتوحاً في الأماكن الموثوقة أو عند الاتصال بأجهزة موثوقة، بالإضافة إلى التحكم في إعدادات قفل النظام.")
+                    Text(stringResource(id = R.string.settings_smart_lock_dialog_desc))
                 }
             },
             confirmButton = {
@@ -544,12 +546,12 @@ fun SettingsScreen(
                         } catch (e2: Exception) {}
                     }
                 }) {
-                    Text("إعدادات الأمان في النظام")
+                    Text(stringResource(id = R.string.settings_system_security))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showSmartLockDialog = false }) {
-                    Text("إغلاق")
+                    Text(stringResource(id = R.string.dialog_close))
                 }
             }
         )
@@ -558,7 +560,7 @@ fun SettingsScreen(
     if (showLanguageDialog) {
         AlertDialog(
             onDismissRequest = { showLanguageDialog = false },
-            title = { Text("اختر لغة التطبيق / Choose Language / Elegir Idioma") },
+            title = { Text(stringResource(id = R.string.language_choose)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(
@@ -572,7 +574,7 @@ fun SettingsScreen(
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("العربية (Arabic)")
+                        Text(stringResource(id = R.string.lang_ar))
                     }
                     Button(
                         onClick = {
@@ -585,7 +587,7 @@ fun SettingsScreen(
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("English (الإنجليزية)")
+                        Text(stringResource(id = R.string.lang_en))
                     }
                     Button(
                         onClick = {
@@ -598,14 +600,14 @@ fun SettingsScreen(
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Español (الإسبانية)")
+                        Text(stringResource(id = R.string.lang_es))
                     }
                 }
             },
             confirmButton = {},
             dismissButton = {
                 TextButton(onClick = { showLanguageDialog = false }) {
-                    Text("إغلاق / Close / Cerrar")
+                    Text(stringResource(id = R.string.dialog_close))
                 }
             }
         )
@@ -614,7 +616,7 @@ fun SettingsScreen(
     if (showLockTimeoutDialog) {
         AlertDialog(
             onDismissRequest = { showLockTimeoutDialog = false },
-            title = { Text("قفل تلقائي بعد مغادرة التطبيق") },
+            title = { Text(stringResource(id = R.string.settings_timeout_title)) },
             text = {
                 Column {
                     Row(
@@ -626,7 +628,7 @@ fun SettingsScreen(
                     ) {
                         RadioButton(selected = currentSettings.lockTimeout == "IMMEDIATELY", onClick = null)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("فوري")
+                        Text(stringResource(id = R.string.settings_timeout_immediately))
                     }
                     Row(
                         modifier = Modifier.fillMaxWidth().clickable {
@@ -637,7 +639,7 @@ fun SettingsScreen(
                     ) {
                         RadioButton(selected = currentSettings.lockTimeout == "1_MIN", onClick = null)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("بعد دقيقة")
+                        Text(stringResource(id = R.string.settings_timeout_1_minute))
                     }
                     Row(
                         modifier = Modifier.fillMaxWidth().clickable {
@@ -648,13 +650,13 @@ fun SettingsScreen(
                     ) {
                         RadioButton(selected = currentSettings.lockTimeout == "5_MIN", onClick = null)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("بعد 5 دقائق")
+                        Text(stringResource(id = R.string.settings_timeout_5_minutes))
                     }
                 }
             },
             confirmButton = {},
             dismissButton = {
-                TextButton(onClick = { showLockTimeoutDialog = false }) { Text("إغلاق") }
+                TextButton(onClick = { showLockTimeoutDialog = false }) { Text(stringResource(id = R.string.dialog_close)) }
             }
         )
     }

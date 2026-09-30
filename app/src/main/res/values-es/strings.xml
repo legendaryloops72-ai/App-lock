@@ -1,14 +1,73 @@
 <resources>
     <string name="app_name">Bloqueo de Aplicaciones</string>
-    <string name="language_title">Idioma (Language)</string>
+    <string name="language_title">Idioma</string>
     <string name="language_desc">Selecciona el idioma de la aplicación (Español, Inglés, Árabe)</string>
+    <string name="language_choose">Elegir idioma</string>
     <string name="lang_ar">العربية (Árabe)</string>
     <string name="lang_en">English (Inglés)</string>
     <string name="lang_es">Español (Español)</string>
+    <string name="dialog_close">Cerrar</string>
 
     <!-- Accessibility Service Prominent Disclosure & Consent -->
     <string name="accessibility_disclosure_title">Uso del servicio de accesibilidad</string>
     <string name="accessibility_disclosure_desc">App Lock utiliza el servicio de accesibilidad únicamente para acceder al nombre del paquete de la aplicación activa en primer plano para detectar cuándo se abren las aplicaciones protegidas y mostrar la pantalla de bloqueo. App Lock no lee el contenido de la pantalla, texto personal ni pulsaciones de teclas. El servicio no se utiliza para evitar la desinstalación ni el cierre forzado. El nombre del paquete se utiliza solo temporalmente en el dispositivo y no se almacena permanentemente, ni se vende ni se comparte con terceros.</string>
     <string name="accessibility_disclosure_agree">Aceptar y continuar</string>
     <string name="accessibility_disclosure_decline">Ahora no</string>
+
+    <!-- Onboarding Screen -->
+    <string name="onboarding_skip">Omitir</string>
+    <string name="onboarding_title_1">Protección avanzada de aplicaciones</string>
+    <string name="onboarding_desc_1">Protege tus chats privados, fotos, aplicaciones financieras y redes sociales con bloqueo por PIN y patrón de máxima seguridad.</string>
+    <string name="onboarding_title_2">Selfie y registro de intrusos</string>
+    <string name="onboarding_desc_2">¡Detecta a los intrusos automáticamente! Si alguien introduce un PIN o patrón incorrecto, App Lock registra al intruso.</string>
+    <string name="onboarding_title_3">Desbloqueo biométrico rápido</string>
+    <string name="onboarding_desc_3">Desbloquea tus aplicaciones protegidas al instante mediante huella digital o reconocimiento facial sin fricción.</string>
+    <string name="onboarding_set_pin_title">Establece tu PIN maestro</string>
+    <string name="onboarding_set_pin_desc">Elige un PIN de 4 a 6 dígitos para proteger tus aplicaciones bloqueadas y ajustes.</string>
+    <string name="onboarding_pin_label">PIN de 4 a 6 dígitos</string>
+    <string name="onboarding_btn_next">Siguiente</string>
+    <string name="onboarding_btn_get_started">Comenzar</string>
+    <string name="onboarding_agree_prefix">Al continuar, aceptas nuestra </string>
+    <string name="onboarding_privacy_policy">Política de privacidad</string>
+
+    <!-- Settings Screen -->
+    <string name="settings_title">Ajustes</string>
+    <string name="settings_permissions_title">Centro de permisos</string>
+    <string name="settings_permissions_desc">Otorgar permisos de bloqueo, uso e inicio</string>
+    <string name="settings_troubleshooting_title">¿Fallo al bloquear apps?</string>
+    <string name="settings_troubleshooting_desc">Resuelto para más del 93% de usuarios</string>
+    <string name="settings_tutorials_title">Tutoriales y Guía</string>
+    <string name="settings_security_title">Contraseña y Seguridad</string>
+    <string name="settings_biometric_title">Desbloqueo por huella</string>
+    <string name="settings_badge_hot">Destacado</string>
+    <string name="settings_uninstall_protection_title">Protección contra desinstalación</string>
+    <string name="settings_badge_secure">Seguro</string>
+    <string name="settings_uninstall_protection_desc">Bloquea ajustes del sistema para evitar desinstalación o forzar detención.</string>
+    <string name="settings_timeout_title">Bloqueo automático al salir</string>
+    <string name="settings_timeout_immediately">Inmediatamente</string>
+    <string name="settings_timeout_1_minute">Después de 1 minuto</string>
+    <string name="settings_timeout_5_minutes">Después de 5 minutos</string>
+    <string name="settings_change_pin_title">Cambiar contraseña</string>
+    <string name="settings_lock_type_title">Tipo de bloqueo</string>
+    <string name="settings_lock_type_pin">Código PIN</string>
+    <string name="settings_lock_type_pattern">Patrón</string>
+    <string name="settings_recovery_method_title">Método de recuperación</string>
+    <string name="settings_smart_lock_title">Bloqueo inteligente</string>
+    <string name="settings_smart_lock_desc">Bloqueo de pantalla • Seguridad avanzada</string>
+    <string name="settings_advanced_title">Avanzado</string>
+    <string name="settings_advanced_desc">Bloqueo de apps • Notificaciones • Inicio</string>
+    <string name="settings_notes_title">Notas y Bóveda</string>
+    <string name="settings_notes_desc">Nueva función • Notas y bóveda privada</string>
+    <string name="settings_other_title">Otros</string>
+    <string name="settings_other_desc">Idioma • Compartir • Temas</string>
+    <string name="settings_privacy_title">Política de privacidad</string>
+    <string name="settings_privacy_desc">Ver la política de privacidad y protección de datos</string>
+    <string name="settings_ad_inspector_title">Inspector de anuncios</string>
+    <string name="settings_ad_inspector_desc">Probar e inspeccionar fuentes de anuncios del SDK</string>
+    <string name="settings_new_pin_label">Nuevo PIN (4 dígitos)</string>
+    <string name="settings_btn_save">Guardar</string>
+    <string name="settings_btn_cancel">Cancelar</string>
+    <string name="settings_smart_lock_dialog_title">Ajustes de Bloqueo Inteligente y Seguridad</string>
+    <string name="settings_smart_lock_dialog_desc">El bloqueo inteligente mantiene el dispositivo desbloqueado en lugares o dispositivos de confianza y gestiona la seguridad del sistema.</string>
+    <string name="settings_system_security">Ajustes de seguridad del sistema</string>
 </resources>

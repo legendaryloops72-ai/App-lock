@@ -27,14 +27,21 @@ import androidx.navigation.compose.rememberNavController
 import com.example.ui.screens.*
 import com.example.ui.theme.MyApplicationTheme
 import com.example.ui.viewmodel.AppLockViewModel
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 
-class MainActivity : androidx.fragment.app.FragmentActivity() {
+class MainActivity : androidx.appcompat.app.AppCompatActivity() {
   private val viewModel: AppLockViewModel by viewModels()
   private var backgroundTime: Long = 0
 
   override fun onCreate(savedInstanceState: Bundle?) {
     installSplashScreen()
+    if (AppCompatDelegate.getApplicationLocales().isEmpty) {
+      AppCompatDelegate.setApplicationLocales(
+        LocaleListCompat.forLanguageTags("ar")
+      )
+    }
     super.onCreate(savedInstanceState)
 
     // In Release builds, prevent screenshots, screen recording, and task switcher previews.

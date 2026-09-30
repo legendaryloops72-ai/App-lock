@@ -18,9 +18,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.R
 import com.example.data.SecuritySettingsEntity
 import com.example.ui.viewmodel.AppLockViewModel
 import kotlinx.coroutines.launch
@@ -42,18 +44,18 @@ fun OnboardingScreen(
 
     val pages = listOf(
         OnboardingPage(
-            title = "Advanced App Protection",
-            description = "Secure your private chats, photos, financial apps, and social media with military-grade PIN and Pattern locking.",
+            title = stringResource(id = R.string.onboarding_title_1),
+            description = stringResource(id = R.string.onboarding_desc_1),
             icon = Icons.Default.Security
         ),
         OnboardingPage(
-            title = "Intruder Selfie & Logs",
-            description = "Automatically catch snoopers! If anyone enters the wrong PIN or pattern, App Lock records an intruder log.",
+            title = stringResource(id = R.string.onboarding_title_2),
+            description = stringResource(id = R.string.onboarding_desc_2),
             icon = Icons.Default.Lock
         ),
         OnboardingPage(
-            title = "Biometric Quick Unlock",
-            description = "Unlock your protected applications instantly using your fingerprint or Face ID with zero friction.",
+            title = stringResource(id = R.string.onboarding_title_3),
+            description = stringResource(id = R.string.onboarding_desc_3),
             icon = Icons.Default.Fingerprint
         )
     )
@@ -89,7 +91,7 @@ fun OnboardingScreen(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "App Lock",
+                        text = stringResource(id = R.string.app_name),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -101,7 +103,7 @@ fun OnboardingScreen(
                             pagerState.animateScrollToPage(pages.size)
                         }
                     }) {
-                        Text("Skip", color = MaterialTheme.colorScheme.primary)
+                        Text(stringResource(id = R.string.onboarding_skip), color = MaterialTheme.colorScheme.primary)
                     }
                 }
             }
@@ -183,7 +185,7 @@ fun OnboardingScreen(
                         Spacer(modifier = Modifier.height(24.dp))
 
                         Text(
-                            text = "Set Your Master PIN",
+                            text = stringResource(id = R.string.onboarding_set_pin_title),
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold,
                             textAlign = TextAlign.Center
@@ -192,7 +194,7 @@ fun OnboardingScreen(
                         Spacer(modifier = Modifier.height(8.dp))
 
                         Text(
-                            text = "Choose a 4-digit PIN to secure your locked apps and settings.",
+                            text = stringResource(id = R.string.onboarding_set_pin_desc),
                             style = MaterialTheme.typography.bodyMedium,
                             textAlign = TextAlign.Center,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -203,7 +205,7 @@ fun OnboardingScreen(
                         OutlinedTextField(
                             value = customPin,
                             onValueChange = { if (it.length <= 6) customPin = it },
-                            label = { Text("4-6 Digit PIN") },
+                            label = { Text(stringResource(id = R.string.onboarding_pin_label)) },
                             shape = RoundedCornerShape(16.dp),
                             singleLine = true,
                             modifier = Modifier.width(220.dp)
@@ -259,7 +261,7 @@ fun OnboardingScreen(
                     shape = RoundedCornerShape(16.dp)
                 ) {
                     Text(
-                        text = if (pagerState.currentPage < pages.size) "Next" else "Get Started",
+                        text = if (pagerState.currentPage < pages.size) stringResource(id = R.string.onboarding_btn_next) else stringResource(id = R.string.onboarding_btn_get_started),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -273,13 +275,13 @@ fun OnboardingScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "By continuing, you agree to our ",
+                            text = stringResource(id = R.string.onboarding_agree_prefix),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                         )
                         val context = androidx.compose.ui.platform.LocalContext.current
                         Text(
-                            text = "Privacy Policy",
+                            text = stringResource(id = R.string.onboarding_privacy_policy),
                             style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
                             color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.clickable {
