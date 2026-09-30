@@ -5,4 +5,10 @@
     <string name="lang_ar">العربية (Arabic)</string>
     <string name="lang_en">English (الإنجليزية)</string>
     <string name="lang_es">Español (الإسبانية)</string>
+
+    <!-- Accessibility Service Prominent Disclosure & Consent -->
+    <string name="accessibility_disclosure_title">استخدام خدمة إمكانية الوصول</string>
+    <string name="accessibility_disclosure_desc">يستخدم App Lock خدمة إمكانية الوصول للوصول فقط إلى اسم حزمة التطبيق النشط في الواجهة لاكتشاف فتح التطبيقات التي اخترتها للحماية وعرض شاشة القفل. لا يقرأ App Lock محتوى الشاشة أو النصوص الشخصية أو مدخلات لوحة المفاتيح. ولا تُستخدم الخدمة لمنع إلغاء التثبيت أو إيقاف التطبيقات. يُستخدم اسم الحزمة مؤقتًا على الجهاز فقط، ولا يتم حفظه بشكل دائم أو بيعه أو مشاركته مع جهات خارجية.</string>
+    <string name="accessibility_disclosure_agree">موافقة ومتابعة</string>
+    <string name="accessibility_disclosure_decline">ليس الآن</string>
 </resources>

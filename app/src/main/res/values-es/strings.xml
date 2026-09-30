@@ -5,4 +5,10 @@
     <string name="lang_ar">العربية (Árabe)</string>
     <string name="lang_en">English (Inglés)</string>
     <string name="lang_es">Español (Español)</string>
+
+    <!-- Accessibility Service Prominent Disclosure & Consent -->
+    <string name="accessibility_disclosure_title">Uso del servicio de accesibilidad</string>
+    <string name="accessibility_disclosure_desc">App Lock utiliza el servicio de accesibilidad únicamente para acceder al nombre del paquete de la aplicación activa en primer plano para detectar cuándo se abren las aplicaciones protegidas y mostrar la pantalla de bloqueo. App Lock no lee el contenido de la pantalla, texto personal ni pulsaciones de teclas. El servicio no se utiliza para evitar la desinstalación ni el cierre forzado. El nombre del paquete se utiliza solo temporalmente en el dispositivo y no se almacena permanentemente, ni se vende ni se comparte con terceros.</string>
+    <string name="accessibility_disclosure_agree">Aceptar y continuar</string>
+    <string name="accessibility_disclosure_decline">Ahora no</string>
 </resources>

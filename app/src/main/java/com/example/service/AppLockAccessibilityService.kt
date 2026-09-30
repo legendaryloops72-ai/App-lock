@@ -4,7 +4,6 @@ import android.accessibilityservice.AccessibilityService
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.view.accessibility.AccessibilityEvent
-import android.view.accessibility.AccessibilityNodeInfo
 import android.view.inputmethod.InputMethodManager
 import com.example.data.AppLockDatabase
 import com.example.MainActivity
@@ -15,7 +14,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import java.util.Stack
 
 class AppLockAccessibilityService : AccessibilityService() {
 
@@ -24,9 +22,6 @@ class AppLockAccessibilityService : AccessibilityService() {
 
     @Volatile
     private var lockedApps: Map<String, String> = emptyMap()
-
-    @Volatile
-    private var isUninstallProtectionEnabled = false
 
     companion object {
         var isServiceRunning = false
@@ -58,7 +53,6 @@ class AppLockAccessibilityService : AccessibilityService() {
         cacheJob?.cancel()
         serviceScope.cancel()
         lockedApps = emptyMap()
-        isUninstallProtectionEnabled = false
         isServiceRunning = false
         super.onDestroy()
     }
@@ -86,11 +80,6 @@ class AppLockAccessibilityService : AccessibilityService() {
                     lockedApps = apps.asSequence()
                         .filter { it.isLocked }
                         .associate { it.packageName to it.appName }
-                }
-            }
-            launch {
-                db.appLockDao().getSecuritySettings().collectLatest { settings ->
-                    isUninstallProtectionEnabled = settings?.uninstallProtectionEnabled ?: false
                 }
             }
         }
@@ -126,21 +115,6 @@ class AppLockAccessibilityService : AccessibilityService() {
         // The authenticated app remains usable for this foreground session only.
         if (packageName == unlockedPackage) return
 
-        // Use in-memory snapshots for the hot accessibility-event path.
-        // Room is observed above and only updates these snapshots when data changes.
-        if (isUninstallProtectionEnabled && isUninstallOrForceStopScreen(packageName)) {
-            val rootNode = rootInActiveWindow
-            if (isAppInfoOrUninstallOfOurApp(rootNode)) {
-                val intent = Intent(applicationContext, MainActivity::class.java).apply {
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                    putExtra("INTERCEPT_PACKAGE", packageName)
-                    putExtra("INTERCEPT_NAME", "إعدادات الأمان (AppLock)")
-                }
-                startActivity(intent)
-                return
-            }
-        }
-
         // Android Settings hosts the permission pages launched from App Lock.
         // It must never be treated as a user-protected app, otherwise tapping
         // Accessibility/Usage/Overlay permission opens LockScreen instead.
@@ -155,77 +129,6 @@ class AppLockAccessibilityService : AccessibilityService() {
         }
         interceptedPackage = packageName
         startActivity(intent)
-    }
-
-    private fun isUninstallOrForceStopScreen(packageName: String): Boolean {
-        return packageName == "com.android.settings" ||
-            packageName.contains("packageinstaller") ||
-            packageName.contains("package.installer") ||
-            packageName.contains("permissioncontroller") ||
-            packageName.contains("packageinstaller")
-    }
-
-    private fun isAppInfoOrUninstallOfOurApp(root: AccessibilityNodeInfo?): Boolean {
-        if (root == null) return false
-        val nodes = Stack<AccessibilityNodeInfo>()
-        nodes.push(root)
-
-        var containsOurAppRef = false
-        var containsUninstallOrForceStop = false
-        val ourPackage = applicationContext.packageName
-        val ourLabels = setOf(
-            "applock",
-            "قفل التطبيقات",
-            "حاسبة آمنة",
-            "طقس اليوم",
-            "متصفح الإنترنت",
-            "my application"
-        )
-        val actionKeywords = setOf(
-            "uninstall",
-            "uninstall app",
-            "force stop",
-            "remove app",
-            "إلغاء التثبيت",
-            "إزالة التطبيق",
-            "إيقاف إجباري",
-            "إيقاف فرض",
-            "فرض الإيقاف",
-            "desinstalar",
-            "forzar detención",
-            "désinstaller",
-            "arrêter de force",
-            "deinstallieren",
-            "beenden erzwingen"
-        )
-
-        while (nodes.isNotEmpty()) {
-            val node = nodes.pop() ?: continue
-            val text = (node.text?.toString() ?: "").trim().lowercase()
-            val contentDescription = (node.contentDescription?.toString() ?: "").trim().lowercase()
-            val combinedText = "$text $contentDescription"
-
-            if (combinedText.contains(ourPackage.lowercase()) ||
-                ourLabels.any { combinedText.contains(it) }) {
-                containsOurAppRef = true
-            }
-
-            if (actionKeywords.any { combinedText.contains(it) }) {
-                containsUninstallOrForceStop = true
-            }
-
-            if (containsOurAppRef && containsUninstallOrForceStop) {
-                return true
-            }
-
-            for (i in 0 until node.childCount) {
-                val child = node.getChild(i)
-                if (child != null) {
-                    nodes.push(child)
-                }
-            }
-        }
-        return false
     }
 
     private var cachedLauncherPackages: Set<String> = emptySet()

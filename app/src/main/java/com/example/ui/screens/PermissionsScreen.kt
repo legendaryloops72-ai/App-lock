@@ -24,8 +24,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.ui.viewmodel.AppLockViewModel
 
 private fun isAccessibilityServiceEnabled(context: Context): Boolean {
@@ -72,6 +75,7 @@ fun PermissionsScreen(
         )
     }
     val accessibilityGranted = remember { mutableStateOf(isAccessibilityServiceEnabled(context)) }
+    val showAccessibilityDisclosure = remember { mutableStateOf(false) }
     val cameraGranted = remember {
         mutableStateOf(
             ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
@@ -171,16 +175,22 @@ fun PermissionsScreen(
             item {
                 PermissionCardItem(
                     title = "خدمة إمكانية الوصول (Accessibility Service)",
-                    description = "ضرورية للغاية لحماية خصوصيتك ومنع الحذف غير المصرح به؛ تتيح للتطبيق رصد محاولات الدخول لصفحة إعدادات (AppLock) لمنع المتطفلين من إلغاء تثبيت التطبيق أو إيقافه إجبارياً، بالإضافة لرصد تشغيل التطبيقات المقفلة بالوقت الفعلي وعرض شاشة القفل فوراً.",
+                    description = "تتيح للتطبيق رصد تشغيل التطبيقات المقفلة في الوقت الفعلي لاكتشاف فتحها وعرض شاشة القفل فوراً لطلب رمز PIN أو المصادقة الحيوية.",
                     isGranted = accessibilityGranted.value,
                     grantButtonText = if (accessibilityGranted.value) "تم منح الإذن بنجاح" else "منح إذن الوصول",
                     onGrantClick = {
-                        try {
-                            val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
-                            viewModel.ignoreNextSelfLock(); context.startActivity(intent)
-                        } catch (e: Exception) {
-                            val intent = Intent(Settings.ACTION_SETTINGS)
-                            viewModel.ignoreNextSelfLock(); context.startActivity(intent)
+                        if (accessibilityGranted.value) {
+                            try {
+                                val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                                viewModel.ignoreNextSelfLock()
+                                context.startActivity(intent)
+                            } catch (e: Exception) {
+                                val intent = Intent(Settings.ACTION_SETTINGS)
+                                viewModel.ignoreNextSelfLock()
+                                context.startActivity(intent)
+                            }
+                        } else {
+                            showAccessibilityDisclosure.value = true
                         }
                     }
                 )
@@ -239,6 +249,64 @@ fun PermissionsScreen(
                 )
             }
         }
+    }
+
+    if (showAccessibilityDisclosure.value) {
+        AlertDialog(
+            onDismissRequest = {
+                showAccessibilityDisclosure.value = false
+            },
+            title = {
+                Text(
+                    text = stringResource(id = R.string.accessibility_disclosure_title),
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleLarge
+                )
+            },
+            text = {
+                Text(
+                    text = stringResource(id = R.string.accessibility_disclosure_desc),
+                    style = MaterialTheme.typography.bodyMedium,
+                    lineHeight = 22.sp
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showAccessibilityDisclosure.value = false
+                        try {
+                            val prefs = context.getSharedPreferences("app_lock_prefs", Context.MODE_PRIVATE)
+                            prefs.edit().putBoolean("accessibility_consent_granted", true).apply()
+                        } catch (_: Exception) {}
+                        try {
+                            val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                            viewModel.ignoreNextSelfLock()
+                            context.startActivity(intent)
+                        } catch (e: Exception) {
+                            val intent = Intent(Settings.ACTION_SETTINGS)
+                            viewModel.ignoreNextSelfLock()
+                            context.startActivity(intent)
+                        }
+                    }
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.accessibility_disclosure_agree),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showAccessibilityDisclosure.value = false
+                    }
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.accessibility_disclosure_decline)
+                    )
+                }
+            }
+        )
     }
 }
 

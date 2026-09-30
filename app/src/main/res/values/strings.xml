@@ -5,4 +5,10 @@
     <string name="lang_ar">العربية (Arabic)</string>
     <string name="lang_en">English (English)</string>
     <string name="lang_es">Español (Spanish)</string>
+
+    <!-- Accessibility Service Prominent Disclosure & Consent -->
+    <string name="accessibility_disclosure_title">Use of Accessibility Service</string>
+    <string name="accessibility_disclosure_desc">App Lock uses the Accessibility Service solely to access the active foreground app\'s package name to detect when your protected apps are opened and display the lock screen. App Lock does not read screen content, personal text, or keystrokes. The service is not used to prevent uninstallation or force stopping. The package name is used only temporarily on the device and is not permanently stored, sold, or shared with third parties.</string>
+    <string name="accessibility_disclosure_agree">Agree &amp; Continue</string>
+    <string name="accessibility_disclosure_decline">Not Now</string>
 </resources>
