@@ -36,12 +36,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.data.ProtectedAppEntity
 import com.example.ui.components.AdBanner
 import com.example.ui.components.NativeAdCard
@@ -51,7 +53,7 @@ import kotlinx.coroutines.withContext
 
 /**
  * شاشة الواجهة الرئيسية المعاد تصميمها بالكامل
- * مع دعم كامل للغة العربية (RTL) وتصميم داكن أنيق يطابق أحدث معايير Material Design 3
+ * مع دعم تعدد اللغات وتصميم داكن أنيق يطابق أحدث معايير Material Design 3
  */
 @Composable
 fun HomeScreen(
@@ -87,77 +89,75 @@ fun HomeScreen(
     val lockedCount = remember(apps) { apps.count { it.isLocked } }
     val totalCount = remember(apps) { apps.size }
 
-    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
-        BackHandler(enabled = currentNavIndex != 0) {
-            currentNavIndex = 0
-        }
-        Scaffold(
-            bottomBar = {
-                Column(modifier = Modifier.fillMaxWidth().background(Color(0xFF0D111A))) {
-                    AdBanner()
-                    ModernBottomNavigationBar(
-                        selectedIndex = currentNavIndex,
-                        onItemSelected = { index ->
-                            if (index == 3) {
-                                onNavigateToSettings()
-                            } else {
-                                currentNavIndex = index
-                            }
+    BackHandler(enabled = currentNavIndex != 0) {
+        currentNavIndex = 0
+    }
+    Scaffold(
+        bottomBar = {
+            Column(modifier = Modifier.fillMaxWidth().background(Color(0xFF0D111A))) {
+                AdBanner()
+                ModernBottomNavigationBar(
+                    selectedIndex = currentNavIndex,
+                    onItemSelected = { index ->
+                        if (index == 3) {
+                            onNavigateToSettings()
+                        } else {
+                            currentNavIndex = index
                         }
-                    )
-                }
-            },
-            containerColor = Color(0xFF0A0D14)
-        ) { paddingValues ->
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                Color(0xFF0E131F),
-                                Color(0xFF0A0D14),
-                                Color(0xFF07090E)
-                            )
+                    }
+                )
+            }
+        },
+        containerColor = Color(0xFF0A0D14)
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFF0E131F),
+                            Color(0xFF0A0D14),
+                            Color(0xFF07090E)
                         )
                     )
-            ) {
-                when (currentNavIndex) {
-                    0 -> HomeDashboardView(
-                        apps = filteredApps,
-                        lockedCount = lockedCount,
-                        totalCount = totalCount,
-                        onOpenAppsSection = { currentNavIndex = 1 },
-                        onNavigateToVault = onNavigateToVault,
-                        onNavigateToJunkCleaner = onNavigateToJunkCleaner,
-                        onNavigateToPermissions = onNavigateToPermissions,
-                        onNavigateToDisguise = onNavigateToDisguise,
-                        onNavigateToTheme = onNavigateToTheme,
-                        onNavigateToCloudBackup = onNavigateToCloudBackup,
-                        onNavigateToIntruders = onNavigateToIntruders,
-                        viewModel = viewModel
-                    )
-                    1 -> AppsLockListView(
-                        apps = filteredApps,
-                        searchQuery = searchQuery,
-                        selectedFilter = selectedAppFilterTab,
-                        onFilterSelected = { selectedAppFilterTab = it },
-                        onSearchChanged = { viewModel.setSearchQuery(it) },
-                        onToggleLock = { viewModel.toggleAppLock(it) },
-                        onLaunchApp = { viewModel.triggerAppLaunch(it) },
-                        onNavigateToPermissions = onNavigateToPermissions
-                    )
-                    2 -> FeaturesListView(
-                        onNavigateToVault = onNavigateToVault,
-                        onNavigateToJunkCleaner = onNavigateToJunkCleaner,
-                        onNavigateToPermissions = onNavigateToPermissions,
-                        onNavigateToDisguise = onNavigateToDisguise,
-                        onNavigateToTheme = onNavigateToTheme,
-                        onNavigateToCloudBackup = onNavigateToCloudBackup,
-                        onNavigateToIntruders = onNavigateToIntruders
-                    )
-                }
+                )
+        ) {
+            when (currentNavIndex) {
+                0 -> HomeDashboardView(
+                    apps = filteredApps,
+                    lockedCount = lockedCount,
+                    totalCount = totalCount,
+                    onOpenAppsSection = { currentNavIndex = 1 },
+                    onNavigateToVault = onNavigateToVault,
+                    onNavigateToJunkCleaner = onNavigateToJunkCleaner,
+                    onNavigateToPermissions = onNavigateToPermissions,
+                    onNavigateToDisguise = onNavigateToDisguise,
+                    onNavigateToTheme = onNavigateToTheme,
+                    onNavigateToCloudBackup = onNavigateToCloudBackup,
+                    onNavigateToIntruders = onNavigateToIntruders,
+                    viewModel = viewModel
+                )
+                1 -> AppsLockListView(
+                    apps = filteredApps,
+                    searchQuery = searchQuery,
+                    selectedFilter = selectedAppFilterTab,
+                    onFilterSelected = { selectedAppFilterTab = it },
+                    onSearchChanged = { viewModel.setSearchQuery(it) },
+                    onToggleLock = { viewModel.toggleAppLock(it) },
+                    onLaunchApp = { viewModel.triggerAppLaunch(it) },
+                    onNavigateToPermissions = onNavigateToPermissions
+                )
+                2 -> FeaturesListView(
+                    onNavigateToVault = onNavigateToVault,
+                    onNavigateToJunkCleaner = onNavigateToJunkCleaner,
+                    onNavigateToPermissions = onNavigateToPermissions,
+                    onNavigateToDisguise = onNavigateToDisguise,
+                    onNavigateToTheme = onNavigateToTheme,
+                    onNavigateToCloudBackup = onNavigateToCloudBackup,
+                    onNavigateToIntruders = onNavigateToIntruders
+                )
             }
         }
     }
@@ -199,13 +199,13 @@ private fun HomeDashboardView(
             ) {
                 Column {
                     Text(
-                        text = "تطبيقاتي",
+                        text = stringResource(id = R.string.home_title),
                         fontSize = 28.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color = Color.White
                     )
                     Text(
-                        text = "$lockedCount من إجمالي $totalCount تطبيق محمي",
+                        text = stringResource(id = R.string.home_protected_count, lockedCount, totalCount),
                         fontSize = 13.sp,
                         color = Color(0xFF94A3B8),
                         fontWeight = FontWeight.Medium
@@ -231,7 +231,7 @@ private fun HomeDashboardView(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Shield,
-                        contentDescription = "الحماية",
+                        contentDescription = stringResource(id = R.string.home_desc_shield),
                         tint = Color(0xFF60A5FA),
                         modifier = Modifier.size(24.dp)
                     )
@@ -248,22 +248,22 @@ private fun HomeDashboardView(
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     PrimaryFeatureGridCard(
-                        title = "قفل التطبيقات",
-                        subtitle = "احم تطبيقاتك وخصوصيتك",
+                        title = stringResource(id = R.string.home_card_app_lock_title),
+                        subtitle = stringResource(id = R.string.home_card_app_lock_sub),
                         icon = Icons.Default.Lock,
                         modifier = Modifier.weight(1f),
                         onClick = onOpenAppsSection
                     )
                     PrimaryFeatureGridCard(
-                        title = "مدير الملفات",
-                        subtitle = "إدارة ملفاتك بسهولة",
+                        title = stringResource(id = R.string.home_card_file_manager_title),
+                        subtitle = stringResource(id = R.string.home_card_file_manager_sub),
                         icon = Icons.Default.Folder,
                         modifier = Modifier.weight(1f),
                         onClick = onNavigateToVault
                     )
                     PrimaryFeatureGridCard(
-                        title = "تنظيف الهاتف",
-                        subtitle = "تخلص من الملفات الزائدة",
+                        title = stringResource(id = R.string.home_card_cleaner_title),
+                        subtitle = stringResource(id = R.string.home_card_cleaner_sub),
                         icon = Icons.Default.CleaningServices,
                         modifier = Modifier.weight(1f),
                         onClick = onNavigateToJunkCleaner
@@ -276,15 +276,15 @@ private fun HomeDashboardView(
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     PrimaryFeatureGridCard(
-                        title = "الحماية",
-                        subtitle = "حماية شاملة لهاتفك",
+                        title = stringResource(id = R.string.home_card_security_title),
+                        subtitle = stringResource(id = R.string.home_card_security_sub),
                         icon = Icons.Default.Security,
                         modifier = Modifier.weight(1f),
                         onClick = onNavigateToPermissions
                     )
                     PrimaryFeatureGridCard(
-                        title = "الأدوات",
-                        subtitle = "أدوات ذكية مفيدة",
+                        title = stringResource(id = R.string.home_card_tools_title),
+                        subtitle = stringResource(id = R.string.home_card_tools_sub),
                         icon = Icons.Default.BusinessCenter,
                         modifier = Modifier.weight(1f),
                         onClick = onNavigateToDisguise
@@ -304,7 +304,7 @@ private fun HomeDashboardView(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "المميزات",
+                        text = stringResource(id = R.string.home_features_title),
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
@@ -320,32 +320,32 @@ private fun HomeDashboardView(
 
                 // ميزة: الحماية الذكية
                 FeatureListItemCard(
-                    title = "الحماية الذكية",
-                    subtitle = "حماية متقدمة في الوقت الحقيقي",
+                    title = stringResource(id = R.string.home_feat_smart_protect_title),
+                    subtitle = stringResource(id = R.string.home_feat_smart_protect_sub),
                     icon = Icons.Default.Shield,
                     onClick = onNavigateToPermissions
                 )
 
                 // ميزة: الخصوصية
                 FeatureListItemCard(
-                    title = "الخصوصية",
-                    subtitle = "حافظ على بياناتك وخصوصيتك",
+                    title = stringResource(id = R.string.home_feat_privacy_title),
+                    subtitle = stringResource(id = R.string.home_feat_privacy_sub),
                     icon = Icons.Default.Lock,
                     onClick = onNavigateToVault
                 )
 
                 // ميزة: الأداء السريع
                 FeatureListItemCard(
-                    title = "الأداء السريع",
-                    subtitle = "تحسين الأداء وتسريع هاتفك",
+                    title = stringResource(id = R.string.home_feat_speed_title),
+                    subtitle = stringResource(id = R.string.home_feat_speed_sub),
                     icon = Icons.Default.Speed,
                     onClick = onNavigateToJunkCleaner
                 )
 
                 // ميزة: سجل المتطفلين
                 FeatureListItemCard(
-                    title = "سجل الدخلاء والمتطفلين",
-                    subtitle = "التقاط صور لمن يحاول فتح القفل",
+                    title = stringResource(id = R.string.home_feat_intruders_title),
+                    subtitle = stringResource(id = R.string.home_feat_intruders_sub),
                     icon = Icons.Default.CameraAlt,
                     onClick = onNavigateToIntruders
                 )
@@ -574,7 +574,7 @@ private fun AppsLockListView(
         OutlinedTextField(
             value = searchQuery,
             onValueChange = onSearchChanged,
-            placeholder = { Text("بحث عن تطبيق...", color = Color(0xFF64748B), fontSize = 14.sp) },
+            placeholder = { Text(stringResource(id = R.string.home_search_hint), color = Color(0xFF64748B), fontSize = 14.sp) },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Color(0xFF64748B)) },
             shape = RoundedCornerShape(16.dp),
             colors = OutlinedTextFieldDefaults.colors(
@@ -600,19 +600,19 @@ private fun AppsLockListView(
                 .padding(4.dp)
         ) {
             FilterTabItem(
-                text = "الكل",
+                text = stringResource(id = R.string.home_filter_all),
                 selected = selectedFilter == 0,
                 modifier = Modifier.weight(1f),
                 onClick = { onFilterSelected(0) }
             )
             FilterTabItem(
-                text = "المقفل",
+                text = stringResource(id = R.string.home_filter_locked),
                 selected = selectedFilter == 1,
                 modifier = Modifier.weight(1f),
                 onClick = { onFilterSelected(1) }
             )
             FilterTabItem(
-                text = "المفتوح",
+                text = stringResource(id = R.string.home_filter_unlocked),
                 selected = selectedFilter == 2,
                 modifier = Modifier.weight(1f),
                 onClick = { onFilterSelected(2) }
@@ -795,7 +795,7 @@ private fun FeaturesListView(
     ) {
         item {
             Text(
-                text = "جميع المميزات والأدوات",
+                text = stringResource(id = R.string.home_all_features_title),
                 fontSize = 22.sp,
                 fontWeight = FontWeight.ExtraBold,
                 color = Color.White,
@@ -805,8 +805,8 @@ private fun FeaturesListView(
 
         item {
             FeatureListItemCard(
-                title = "خزانة الصور والملفات",
-                subtitle = "إخفاء الصور ومقاطع الفيديو برقم سري",
+                title = stringResource(id = R.string.home_feat_vault_title),
+                subtitle = stringResource(id = R.string.home_feat_vault_sub),
                 icon = Icons.Default.Lock,
                 onClick = onNavigateToVault
             )
@@ -814,8 +814,8 @@ private fun FeaturesListView(
 
         item {
             FeatureListItemCard(
-                title = "منظف الملفات المؤقتة",
-                subtitle = "تفريغ مساحة الذاكرة وتسريع الهاتف",
+                title = stringResource(id = R.string.home_feat_junk_cleaner_title),
+                subtitle = stringResource(id = R.string.home_feat_junk_cleaner_sub),
                 icon = Icons.Default.CleaningServices,
                 onClick = onNavigateToJunkCleaner
             )
@@ -823,8 +823,8 @@ private fun FeaturesListView(
 
         item {
             FeatureListItemCard(
-                title = "أيقونة التنكر والتمويه",
-                subtitle = "تغيير شكل أيقونة التطبيق لآلة حاسبة أو مفكرة",
+                title = stringResource(id = R.string.home_feat_disguise_title),
+                subtitle = stringResource(id = R.string.home_feat_disguise_sub),
                 icon = Icons.Default.PhoneAndroid,
                 onClick = onNavigateToDisguise
             )
@@ -832,8 +832,8 @@ private fun FeaturesListView(
 
         item {
             FeatureListItemCard(
-                title = "الثيمات والمظهر",
-                subtitle = "تخصيص ألوان وتصميم شاشة القفل",
+                title = stringResource(id = R.string.home_feat_themes_title),
+                subtitle = stringResource(id = R.string.home_feat_themes_sub),
                 icon = Icons.Default.Palette,
                 onClick = onNavigateToTheme
             )
@@ -841,8 +841,8 @@ private fun FeaturesListView(
 
         item {
             FeatureListItemCard(
-                title = "النسخ الاحتياطي السحابي",
-                subtitle = "مزامنة إعدادات القفل مع حساب Google Drive",
+                title = stringResource(id = R.string.home_feat_cloud_backup_title),
+                subtitle = stringResource(id = R.string.home_feat_cloud_backup_sub),
                 icon = Icons.Default.Cloud,
                 onClick = onNavigateToCloudBackup
             )
@@ -850,8 +850,8 @@ private fun FeaturesListView(
 
         item {
             FeatureListItemCard(
-                title = "سجل صور المتطفلين",
-                subtitle = "عرض صور الأشخاص الذين أدخلوا كلمة سر خاطئة",
+                title = stringResource(id = R.string.home_feat_intruder_logs_title),
+                subtitle = stringResource(id = R.string.home_feat_intruder_logs_sub),
                 icon = Icons.Default.Security,
                 onClick = onNavigateToIntruders
             )
@@ -859,8 +859,8 @@ private fun FeaturesListView(
 
         item {
             FeatureListItemCard(
-                title = "مركز الصلاحيات والأذونات",
-                subtitle = "التحقق من حالة إذن الوصول والحماية الخلفية",
+                title = stringResource(id = R.string.home_feat_permissions_title),
+                subtitle = stringResource(id = R.string.home_feat_permissions_sub),
                 icon = Icons.Default.Shield,
                 onClick = onNavigateToPermissions
             )
@@ -895,25 +895,25 @@ private fun ModernBottomNavigationBar(
         ) {
             BottomNavItem(
                 icon = Icons.Default.Home,
-                label = "الرئيسية",
+                label = stringResource(id = R.string.nav_home),
                 selected = selectedIndex == 0,
                 onClick = { onItemSelected(0) }
             )
             BottomNavItem(
                 icon = Icons.Default.Apps,
-                label = "التطبيقات",
+                label = stringResource(id = R.string.nav_apps),
                 selected = selectedIndex == 1,
                 onClick = { onItemSelected(1) }
             )
             BottomNavItem(
                 icon = Icons.Default.Star,
-                label = "المميزات",
+                label = stringResource(id = R.string.home_features_title),
                 selected = selectedIndex == 2,
                 onClick = { onItemSelected(2) }
             )
             BottomNavItem(
                 icon = Icons.Default.Settings,
-                label = "الإعدادات",
+                label = stringResource(id = R.string.settings_title),
                 selected = selectedIndex == 3,
                 onClick = { onItemSelected(3) }
             )
