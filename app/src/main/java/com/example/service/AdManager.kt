@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.util.Log
 import android.view.View
+import android.os.SystemClock
 import com.google.android.libraries.ads.mobile.sdk.MobileAds
 import com.google.android.libraries.ads.mobile.sdk.banner.AdSize
 import com.google.android.libraries.ads.mobile.sdk.banner.BannerAd
@@ -44,17 +45,18 @@ object AdManager {
     private const val TAG = "AdManager_Mediation"
 
     const val APP_ID = "ca-app-pub-4760027279848820~7533922348"
-    const val BANNER_AD_UNIT_ID = "ca-app-pub-4760027279848820/6077370442"
+    const val BANNER_AD_UNIT_ID = "ca-app-pub-4760027279848820/9562545613"
     const val NATIVE_AD_UNIT_ID = "ca-app-pub-4760027279848820/7039098324"
-    private const val INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-3940256099942544/1033173712"
-    private const val APP_OPEN_AD_UNIT_ID = "ca-app-pub-3940256099942544/9257395921"
+    private const val INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-4760027279848820/4997835832"
+    private const val APP_OPEN_AD_UNIT_ID = "ca-app-pub-4760027279848820/2527585164"
 
     private var interstitialAd: InterstitialAd? = null
     private var appOpenAd: AppOpenAd? = null
     private var isAdLoading = false
     private var isAppOpenAdLoading = false
     private var isEmergencyMode = false
-    private var isAppJustOpened = true
+    private var lastInterstitialShownAt = 0L
+    private const val INTERSTITIAL_COOLDOWN_MS = 180_000L
     
     private val _isInitialized = MutableStateFlow(false)
     val isInitialized: StateFlow<Boolean> = _isInitialized.asStateFlow()
@@ -214,50 +216,37 @@ object AdManager {
 
     // عرض الإعلان البيني (Interstitial)
     fun showInterstitialAd(activity: Activity) {
-        if (isEmergencyMode) return
+        if (isEmergencyMode || activity.isFinishing || activity.isDestroyed) return
+
+        val now = SystemClock.elapsedRealtime()
+        if (now - lastInterstitialShownAt < INTERSTITIAL_COOLDOWN_MS) return
 
         val ad = interstitialAd
-        if (ad != null) {
-            try {
-                ad.adEventCallback = object : InterstitialAdEventCallback {
-                    override fun onAdDismissedFullScreenContent() {
-                        Log.d(TAG, "[Interstitial] Ad dismissed.")
-                        interstitialAd = null
-                        loadInterstitialAd(activity)
-                    }
+        if (ad == null) {
+            loadInterstitialAd(activity)
+            return
+        }
 
-                    override fun onAdFailedToShowFullScreenContent(error: FullScreenContentError) {
-                        Log.e(TAG, "[Interstitial] Failed to show: ${error.message}")
-                        interstitialAd = null
-                        loadInterstitialAd(activity)
-                    }
+        try {
+            ad.adEventCallback = object : InterstitialAdEventCallback {
+                override fun onAdDismissedFullScreenContent() {
+                    Log.d(TAG, "[Interstitial] Ad dismissed.")
+                    interstitialAd = null
+                    loadInterstitialAd(activity)
                 }
 
-                if (isAppJustOpened) {
-                    CoroutineScope(Dispatchers.Main).launch {
-                        delay(3000)
-                        if (!activity.isFinishing && !activity.isDestroyed) {
-                            try {
-                                interstitialAd?.show(activity)
-                            } catch (e: Exception) {
-                                Log.e(TAG, "Exception during delayed Interstitial show", e)
-                                interstitialAd = null
-                            }
-                        }
-                        isAppJustOpened = false
-                    }
-                } else {
-                    if (!activity.isFinishing && !activity.isDestroyed) {
-                        ad.show(activity)
-                    } else {
-                        interstitialAd = null
-                    }
+                override fun onAdFailedToShowFullScreenContent(error: FullScreenContentError) {
+                    Log.e(TAG, "[Interstitial] Failed to show: ${error.message}")
+                    interstitialAd = null
+                    loadInterstitialAd(activity)
                 }
-            } catch (e: Exception) {
-                Log.e(TAG, "Exception showing Next-Gen Interstitial Ad", e)
-                interstitialAd = null
             }
-        } else {
+            lastInterstitialShownAt = now
+            ad.show(activity)
+            interstitialAd = null
+        } catch (e: Exception) {
+            Log.e(TAG, "Exception showing Next-Gen Interstitial Ad", e)
+            interstitialAd = null
             loadInterstitialAd(activity)
         }
     }
