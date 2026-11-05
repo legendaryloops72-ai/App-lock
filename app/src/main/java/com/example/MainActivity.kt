@@ -55,7 +55,6 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
       com.example.service.AdManager.initialize(this) { status ->
         android.util.Log.d("MainActivity", "MobileAds initialized with status: $status")
         com.example.service.AdManager.loadInterstitialAd(this)
-        com.example.service.AdManager.loadAppOpenAd(this)
       }
     } catch (e: Exception) {
       android.util.Log.e("MainActivity", "AdManager initialization error", e)
@@ -182,14 +181,7 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
 
   override fun onResume() {
     super.onResume()
-    // Show App Open only after a meaningful return from the background, never on every screen change.
-    val elapsedInBackground = if (backgroundTime > 0L) System.currentTimeMillis() - backgroundTime else 0L
     backgroundTime = 0L
-    if (elapsedInBackground >= 30_000L) {
-      com.example.service.AdManager.showAppOpenAd(this)
-    } else {
-      com.example.service.AdManager.loadAppOpenAd(this)
-    }
     // App Lock itself is never self-locked.
     viewModel.checkAndNotifyUnseenIntruders(this)
   }
