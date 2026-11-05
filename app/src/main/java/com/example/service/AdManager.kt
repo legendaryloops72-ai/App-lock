@@ -24,10 +24,6 @@ import com.google.android.libraries.ads.mobile.sdk.interstitial.InterstitialAd
 import com.google.android.libraries.ads.mobile.sdk.interstitial.InterstitialAdEventCallback
 import com.google.android.libraries.ads.mobile.sdk.appopen.AppOpenAd
 import com.google.android.libraries.ads.mobile.sdk.appopen.AppOpenAdEventCallback
-import com.google.android.libraries.ads.mobile.sdk.nativead.NativeAd
-import com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdLoader
-import com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdLoaderCallback
-import com.google.android.libraries.ads.mobile.sdk.nativead.NativeAdRequest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -45,10 +41,9 @@ object AdManager {
     private const val TAG = "AdManager_Mediation"
 
     const val APP_ID = "ca-app-pub-4760027279848820~7533922348"
-    const val BANNER_AD_UNIT_ID = "ca-app-pub-4760027279848820/6077370442"
-    const val NATIVE_AD_UNIT_ID = "ca-app-pub-4760027279848820/7039098324"
-    private const val INTERSTITIAL_AD_UNIT_ID = ""
-    private const val APP_OPEN_AD_UNIT_ID = ""
+    const val BANNER_AD_UNIT_ID = "ca-app-pub-4760027279848820/9562545613"
+    private const val INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-4760027279848820/4997835832"
+    private const val APP_OPEN_AD_UNIT_ID = "ca-app-pub-4760027279848820/2527585164"
 
     private var interstitialAd: InterstitialAd? = null
     private var appOpenAd: AppOpenAd? = null
@@ -248,39 +243,6 @@ object AdManager {
             Log.e(TAG, "Exception showing Next-Gen Interstitial Ad", e)
             interstitialAd = null
             loadInterstitialAd(activity)
-        }
-    }
-
-    // تحميل وإدارة الإعلان المدمج مع المحتوى (Native Ad)
-    fun loadNativeAd(
-        context: Context,
-        onAdLoaded: (NativeAd) -> Unit,
-        onAdFailed: ((LoadAdError) -> Unit)? = null
-    ) {
-        if (isEmergencyMode || !_isInitialized.value) {
-            Log.w(TAG, "[Native] Skipping load: isEmergencyMode=$isEmergencyMode, isInitialized=${_isInitialized.value}")
-            return
-        }
-
-        try {
-            val request = NativeAdRequest.Builder(
-                NATIVE_AD_UNIT_ID,
-                listOf(NativeAd.NativeAdType.NATIVE)
-            ).build()
-
-            NativeAdLoader.load(request, object : NativeAdLoaderCallback {
-                override fun onNativeAdLoaded(ad: NativeAd) {
-                    logAdResponseInfo(ad.getResponseInfo(), "Native")
-                    onAdLoaded(ad)
-                }
-
-                override fun onAdFailedToLoad(error: LoadAdError) {
-                    Log.e(TAG, "[Native] Failed to load. Code: ${error.code}, Message: ${error.message}, ResponseID: ${error.responseInfo?.responseId}")
-                    onAdFailed?.invoke(error)
-                }
-            })
-        } catch (e: Exception) {
-            Log.e(TAG, "Exception during loadNativeAd", e)
         }
     }
 
