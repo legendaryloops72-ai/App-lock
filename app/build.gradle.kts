@@ -17,7 +17,7 @@ android {
     applicationId = "com.aistudio.applock.abcd"
     minSdk = 24
     targetSdk = 36
-    versionCode = 8
+    versionCode = 10
     versionName = "6.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
