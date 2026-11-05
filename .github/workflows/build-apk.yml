@@ -2,7 +2,7 @@ name: Build APK
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, work/app-lock-ad-fixes-apk ]
   workflow_dispatch:
 
 jobs:
