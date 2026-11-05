@@ -40,7 +40,7 @@ import kotlinx.coroutines.flow.asStateFlow
 object AdManager {
     private const val TAG = "AdManager_Mediation"
 
-    const val APP_ID = "ca-app-pub-4760027279848820~7533922348"
+    const val APP_ID = "ca-app-pub-4760027279848820~5284591542"
     const val BANNER_AD_UNIT_ID = "ca-app-pub-4760027279848820/9562545613"
     private const val INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-4760027279848820/4997835832"
     private const val APP_OPEN_AD_UNIT_ID = "ca-app-pub-4760027279848820/2527585164"
@@ -49,6 +49,7 @@ object AdManager {
     private var appOpenAd: AppOpenAd? = null
     private var isAdLoading = false
     private var isAppOpenAdLoading = false
+    private var shouldShowAppOpenWhenLoaded = false
     private var isEmergencyMode = false
     private var lastInterstitialShownAt = 0L
     private const val INTERSTITIAL_COOLDOWN_MS = 180_000L
@@ -143,6 +144,12 @@ object AdManager {
                 appOpenAd = ad
                 isAppOpenAdLoading = false
                 logAdResponseInfo(ad.getResponseInfo(), "AppOpen")
+                val activity = context as? Activity
+                if (shouldShowAppOpenWhenLoaded && activity != null &&
+                    !activity.isFinishing && !activity.isDestroyed) {
+                    shouldShowAppOpenWhenLoaded = false
+                    showAppOpenAd(activity)
+                }
             }
 
             override fun onAdFailedToLoad(error: LoadAdError) {
@@ -154,7 +161,8 @@ object AdManager {
 
     // عرض إعلان فتح التطبيق
     fun showAppOpenAd(activity: Activity) {
-        if (APP_OPEN_AD_UNIT_ID.isBlank() || isEmergencyMode) return
+        if (APP_OPEN_AD_UNIT_ID.isBlank() || isEmergencyMode ||
+            activity.isFinishing || activity.isDestroyed) return
 
         val ad = appOpenAd
         if (ad != null) {
@@ -183,6 +191,7 @@ object AdManager {
                 appOpenAd = null
             }
         } else {
+            shouldShowAppOpenWhenLoaded = true
             loadAppOpenAd(activity)
         }
     }
