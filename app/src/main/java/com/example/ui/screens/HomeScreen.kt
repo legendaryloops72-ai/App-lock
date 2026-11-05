@@ -1,6 +1,7 @@
 package com.example.ui.screens
 
 import android.graphics.drawable.Drawable
+import android.app.Activity
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -46,7 +47,6 @@ import androidx.compose.ui.unit.sp
 import com.example.R
 import com.example.data.ProtectedAppEntity
 import com.example.ui.components.AdBanner
-import com.example.ui.components.NativeAdCard
 import com.example.ui.viewmodel.AppLockViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -71,6 +71,8 @@ fun HomeScreen(
     val searchQuery by viewModel.searchQuery.collectAsState()
 
     var currentNavIndex by remember { mutableStateOf(0) } // 0: الرئيسية, 1: التطبيقات, 2: المميزات, 3: الإعدادات
+    var tabNavigationCount by remember { mutableIntStateOf(0) }
+    val activity = LocalContext.current as? Activity
     var selectedAppFilterTab by remember { mutableStateOf(0) } // 0: الكل, 1: مقفل, 2: مفتوح
 
     val filteredApps = remember(apps, searchQuery, selectedAppFilterTab) {
@@ -101,8 +103,12 @@ fun HomeScreen(
                     onItemSelected = { index ->
                         if (index == 3) {
                             onNavigateToSettings()
-                        } else {
+                        } else if (index != currentNavIndex) {
                             currentNavIndex = index
+                            tabNavigationCount += 1
+                            if (tabNavigationCount % 4 == 0 && activity != null) {
+                                com.example.service.AdManager.showInterstitialAd(activity)
+                            }
                         }
                     }
                 )
@@ -352,12 +358,6 @@ private fun HomeDashboardView(
             }
         }
 
-        // 4. Native Ad Section (قسم الإعلان المدمج الأنيق في الأسفل)
-        item {
-            Column(modifier = Modifier.fillMaxWidth().padding(top = 4.dp)) {
-                NativeAdCard()
-            }
-        }
     }
 }
 
@@ -626,10 +626,6 @@ private fun AppsLockListView(
             verticalArrangement = Arrangement.spacedBy(10.dp),
             modifier = Modifier.fillMaxWidth().weight(1f)
         ) {
-            item {
-                NativeAdCard()
-            }
-
             items(apps, key = { it.packageName }) { app ->
                 AppLockItemRow(
                     app = app,
@@ -866,10 +862,6 @@ private fun FeaturesListView(
             )
         }
 
-        item {
-            Spacer(modifier = Modifier.height(8.dp))
-            NativeAdCard()
-        }
     }
 }
 
