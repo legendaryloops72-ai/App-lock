@@ -34,6 +34,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 class MainActivity : androidx.appcompat.app.AppCompatActivity() {
   private val viewModel: AppLockViewModel by viewModels()
   private var backgroundTime: Long = 0
+  private var hasHandledFirstResume: Boolean = false
 
   override fun onCreate(savedInstanceState: Bundle?) {
     installSplashScreen()
@@ -188,7 +189,12 @@ class MainActivity : androidx.appcompat.app.AppCompatActivity() {
       0L
     }
     backgroundTime = 0L
-    if (wasInBackgroundFor >= 30_000L) {
+    if (!hasHandledFirstResume) {
+      hasHandledFirstResume = true
+      // Request the first App Open ad after the activity reaches the foreground.
+      // If loading is still in progress, AdManager will show it when loading completes.
+      com.example.service.AdManager.showAppOpenAd(this)
+    } else if (wasInBackgroundFor >= 30_000L) {
       com.example.service.AdManager.showAppOpenAd(this)
     } else {
       com.example.service.AdManager.loadAppOpenAd(this)
