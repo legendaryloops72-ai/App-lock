@@ -239,6 +239,8 @@ private fun HomeDashboardView(
             }
         }
 
+        item { NativeAdCard() }
+
         // 2. Apps Section (قسم التطبيقات والأدوات الرئيسية - شبكة أنيقة)
         item {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -621,6 +623,8 @@ private fun AppsLockListView(
             verticalArrangement = Arrangement.spacedBy(10.dp),
             modifier = Modifier.fillMaxWidth().weight(1f)
         ) {
+            item { NativeAdCard() }
+
             items(apps, key = { it.packageName }) { app ->
                 AppLockItemRow(
                     app = app,
