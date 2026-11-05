@@ -45,10 +45,10 @@ object AdManager {
     private const val TAG = "AdManager_Mediation"
 
     const val APP_ID = "ca-app-pub-4760027279848820~7533922348"
-    const val BANNER_AD_UNIT_ID = "ca-app-pub-4760027279848820/9562545613"
+    const val BANNER_AD_UNIT_ID = "ca-app-pub-4760027279848820/6077370442"
     const val NATIVE_AD_UNIT_ID = "ca-app-pub-4760027279848820/7039098324"
-    private const val INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-4760027279848820/4997835832"
-    private const val APP_OPEN_AD_UNIT_ID = "ca-app-pub-4760027279848820/2527585164"
+    private const val INTERSTITIAL_AD_UNIT_ID = ""
+    private const val APP_OPEN_AD_UNIT_ID = ""
 
     private var interstitialAd: InterstitialAd? = null
     private var appOpenAd: AppOpenAd? = null
@@ -138,7 +138,7 @@ object AdManager {
 
     // تحميل إعلان فتح التطبيق (App Open Ad)
     fun loadAppOpenAd(context: Context) {
-        if (appOpenAd != null || isAppOpenAdLoading || isEmergencyMode || !_isInitialized.value) return
+        if (APP_OPEN_AD_UNIT_ID.isBlank() || appOpenAd != null || isAppOpenAdLoading || isEmergencyMode || !_isInitialized.value) return
 
         isAppOpenAdLoading = true
         val request = AdRequest.Builder(APP_OPEN_AD_UNIT_ID).build()
@@ -159,7 +159,7 @@ object AdManager {
 
     // عرض إعلان فتح التطبيق
     fun showAppOpenAd(activity: Activity) {
-        if (isEmergencyMode) return
+        if (APP_OPEN_AD_UNIT_ID.isBlank() || isEmergencyMode) return
 
         val ad = appOpenAd
         if (ad != null) {
@@ -194,7 +194,7 @@ object AdManager {
 
     // تحميل إعلان بيني (Interstitial Ad)
     fun loadInterstitialAd(context: Context) {
-        if (interstitialAd != null || isAdLoading || isEmergencyMode || !_isInitialized.value) return
+        if (INTERSTITIAL_AD_UNIT_ID.isBlank() || interstitialAd != null || isAdLoading || isEmergencyMode || !_isInitialized.value) return
 
         isAdLoading = true
         val request = AdRequest.Builder(INTERSTITIAL_AD_UNIT_ID).build()
@@ -216,7 +216,7 @@ object AdManager {
 
     // عرض الإعلان البيني (Interstitial)
     fun showInterstitialAd(activity: Activity) {
-        if (isEmergencyMode || activity.isFinishing || activity.isDestroyed) return
+        if (INTERSTITIAL_AD_UNIT_ID.isBlank() || isEmergencyMode || activity.isFinishing || activity.isDestroyed) return
 
         val now = SystemClock.elapsedRealtime()
         if (now - lastInterstitialShownAt < INTERSTITIAL_COOLDOWN_MS) return
